@@ -1,0 +1,5 @@
+{
+    "watch": ["app.py", "../"],
+    "ext": "pug,css,js,py,less",
+    "delay": "1000"
+}

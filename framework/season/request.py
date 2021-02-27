@@ -1,0 +1,64 @@
+import json
+import re
+import os
+
+from .core import stdClass
+from _include import loader
+
+PATH_PROJECT = loader("PATH_PROJECT", "")
+PATH_APP = os.path.join(PATH_PROJECT, 'season-flask', 'public', 'websrc', 'app')
+PATH_WEBSRC = os.path.join(PATH_PROJECT, 'websrc')
+PATH_MODULES = os.path.join(PATH_WEBSRC, 'modules')
+
+class request:
+    def __init__(self, flask):
+        self._flask = flask
+        
+    def method(self):
+        return self._flask.request.method
+        
+    def client_ip(self):
+        return self._flask.request.environ.get('HTTP_X_REAL_IP', self._flask.request.remote_addr)
+
+    def language(self):
+        headers = dict(self._flask.request.headers)
+        lang = None
+        if 'Framework-Language' in headers:
+            lang = headers['Framework-Language']
+        elif 'Accept-Language' in headers:
+            lang = headers['Accept-Language']
+            lang = lang[:2]
+        return lang
+
+    def uri(self):
+        return self.request().path
+
+    def match(self, pattern):
+        uri = self.uri()
+        x = re.search(pattern, uri)
+        if x: return True
+        return False
+
+    def query(self, key=None, default=None):
+        request = self.request()
+        formdata = dict(request.values)
+
+        if key is None:
+            return formdata
+
+        if key in formdata:
+            return formdata[key]
+        
+        if default is True:
+            self._flask.abort(400)
+            
+        return default
+
+    def headers(self, key, default=None):
+        headers = dict(self._flask.request.headers)
+        if key in headers:
+            return headers[key]
+        return default
+
+    def request(self):
+        return self._flask.request
