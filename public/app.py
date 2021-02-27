@@ -33,6 +33,8 @@ resource_handler = loader("resource_handler", None)
 log = logging.getLogger('werkzeug')
 log.disabled = True
 
+HTTP_METHODS = ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'CONNECT', 'OPTIONS', 'TRACE', 'PATCH']
+
 @app.before_request
 def filter():
     pass
@@ -72,10 +74,10 @@ def resources(path=''):
     return flask.send_from_directory(resdir, path)
 
 # module handler
-@app.route("/")
-@app.route("/<string:module>")
-@app.route("/<string:module>/")
-@app.route("/<string:module>/<path:path>")
+@app.route("/", methods=HTTP_METHODS)
+@app.route("/<string:module>", methods=HTTP_METHODS)
+@app.route("/<string:module>/", methods=HTTP_METHODS)
+@app.route("/<string:module>/<path:path>", methods=HTTP_METHODS)
 def catch_all(module='', path=''):
     # load controller if exists
     module_path = os.path.join(PATH_WEBSRC, 'modules', module)

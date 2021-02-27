@@ -68,6 +68,9 @@ class core(stdClass):
                 return self.flask.session[key]
             return default
 
+        def clear(self):
+            self.flask.session.clear()
+
         def to_dict(self):
             return dict(self.flask.session)
 
