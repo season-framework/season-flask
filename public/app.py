@@ -105,9 +105,10 @@ def catch_all(module='', path=''):
     if os.path.isfile(controller_path) == False:
         segment_idx = len(segment)
         controller_path = os.path.join(PATH_PUBLIC, 'controller', module, 'index.py')
-    
-    if os.path.isfile(controller_path) == False:
-        flask.abort(404)
+
+    controller = None
+    basepath = '/'.join(segment[:-segment_idx])
+    segmentpath = '/'.join(segment[-segment_idx:])
 
     try:
         with open(controller_path, mode="r") as file:
@@ -116,22 +117,19 @@ def catch_all(module='', path=''):
             ctrlcode = 'import season\n' + ctrlcode
             exec(ctrlcode, _tmp)
             controller = _tmp['Controller']()
+
+
+            fnname = segmentpath.split('/')[0]
+            if hasattr(controller, fnname):
+                fnname = fnname
+                segment_idx = segment_idx - 1
+            elif hasattr(controller, '__index__'):
+                fnname = '__index__'
+
+            basepath = '/'.join(segment[:-segment_idx])
+            segmentpath = '/'.join(segment[-segment_idx:])
     except Exception as e:
-        flask.abort(500)
-        pass
-
-    basepath = '/'.join(segment[:-segment_idx])
-    segmentpath = '/'.join(segment[-segment_idx:])
-
-    fnname = segmentpath.split('/')[0]
-    if hasattr(controller, fnname):
-        fnname = fnname
-        segment_idx = segment_idx - 1
-    elif hasattr(controller, '__index__'):
-        fnname = '__index__'
-
-    basepath = '/'.join(segment[:-segment_idx])
-    segmentpath = '/'.join(segment[-segment_idx:])
+            pass
 
     # build framework object
     framework = season.framework.load(flask, module, segmentpath)
@@ -157,17 +155,17 @@ def catch_all(module='', path=''):
                     return res
 
         except Exception as e:
-            print(e)
             pass
 
     # process controller
-    if hasattr(controller, '__startup__'):
-        res = getattr(controller, '__startup__')(framework)
-        if res is not None:
-            return res
+    if controller is not None:
+        if hasattr(controller, '__startup__'):
+            res = getattr(controller, '__startup__')(framework)
+            if res is not None:
+                return res
 
-    if hasattr(controller, fnname):
-        return getattr(controller, fnname)(framework)
+        if hasattr(controller, fnname):
+            return getattr(controller, fnname)(framework)
 
     flask.abort(404)
 

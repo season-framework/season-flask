@@ -69,7 +69,9 @@ class core(stdClass):
             return default
 
         def clear(self):
+            print('pre', self.to_dict())
             self.flask.session.clear()
+            print('next', self.to_dict())
 
         def to_dict(self):
             return dict(self.flask.session)
