@@ -101,7 +101,6 @@ def _build_interface(obj, keys, instname, inst, lv=0):
     else: 
         obj[key] = _build_interface(None, keys, instname, inst, lv=lv+1)
 
-    # print(lv, keys[:lv], key, obj)
     return obj
 
 interfaces_dir = os.path.join(PATH_FRAMEWORK, 'season', 'interfaces')
@@ -115,15 +114,12 @@ for dirpath, dirname, interfacenames in os.walk(interfaces_dir):
     
     for interfacename in interfacenames:
         _class = os.path.join(dirpath, interfacename)
-        try:
-            with open(_class, mode="r") as file:
-                _tmp = stdClass()
-                _code = file.read()
-                _code = 'import season\n' + _code
-                exec(_code, _tmp)
-                _build_interface(interfaces, _dir, interfacename, _tmp)
-        except Exception as e:
-            pass
+        with open(_class, mode="r") as file:
+            _tmp = stdClass()
+            _code = file.read()
+            _code = 'import season\n' + _code
+            exec(_code, _tmp)
+            _build_interface(interfaces, _dir, interfacename, _tmp)
 
 interfaces_dir = os.path.join(PATH_APP, 'interfaces')
 for dirpath, dirname, interfacenames in os.walk(interfaces_dir):
@@ -136,12 +132,10 @@ for dirpath, dirname, interfacenames in os.walk(interfaces_dir):
     
     for interfacename in interfacenames:
         _class = os.path.join(dirpath, interfacename)
-        try:
-            with open(_class, mode="r") as file:
-                _tmp = stdClass()
-                _code = file.read()
-                _code = 'import season\n' + _code
-                exec(_code, _tmp)
-                _build_interface(interfaces, _dir, interfacename, _tmp)
-        except Exception as e:
-            pass
+        with open(_class, mode="r") as file:
+            _tmp = stdClass()
+            _code = file.read()
+            _code = 'import season\n' + _code
+            exec(_code, _tmp)
+            _build_interface(interfaces, _dir, interfacename, _tmp)
+        
