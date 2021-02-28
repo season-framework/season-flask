@@ -110,26 +110,24 @@ def catch_all(module='', path=''):
     basepath = '/'.join(segment[:-segment_idx])
     segmentpath = '/'.join(segment[-segment_idx:])
 
-    try:
-        with open(controller_path, mode="r") as file:
-            _tmp = {'Controller': None}
-            ctrlcode = file.read()
-            ctrlcode = 'import season\n' + ctrlcode
-            exec(ctrlcode, _tmp)
-            controller = _tmp['Controller']()
+    with open(controller_path, mode="r") as file:
+        _tmp = {'Controller': None}
+        ctrlcode = file.read()
+        ctrlcode = 'import season\n' + ctrlcode
+        exec(ctrlcode, _tmp)
+        controller = _tmp['Controller']()
 
+        fnname = segmentpath.split('/')[0]
+        if hasattr(controller, fnname):
+            fnname = fnname
+            segment_idx = segment_idx - 1
+        elif hasattr(controller, '__index__'):
+            fnname = '__index__'
+        else:
+            flask.abort(404)
 
-            fnname = segmentpath.split('/')[0]
-            if hasattr(controller, fnname):
-                fnname = fnname
-                segment_idx = segment_idx - 1
-            elif hasattr(controller, '__index__'):
-                fnname = '__index__'
-
-            basepath = '/'.join(segment[:-segment_idx])
-            segmentpath = '/'.join(segment[-segment_idx:])
-    except Exception as e:
-            pass
+        basepath = '/'.join(segment[:-segment_idx])
+        segmentpath = '/'.join(segment[-segment_idx:])
 
     # build framework object
     framework = season.framework.load(flask, module, segmentpath)
