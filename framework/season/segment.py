@@ -15,7 +15,10 @@ class segment:
         self.framework = framework
     
     def get(self, key, _default=None):
-        _segment = self.framework._segmentpath.split('/')
+        _segment = []
+        if len(self.framework._segmentpath) > 0:
+            _segment = self.framework._segmentpath.split('/')
+        
         if isinstance(key, int):
             if len(_segment) > key:
                 return _segment[key]
