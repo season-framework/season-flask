@@ -82,11 +82,15 @@ def catch_all(module='', path=''):
     # load controller if exists
     module_path = os.path.join(PATH_WEBSRC, 'modules', module)
     segmentpath = ""
-    segment = path.split('/')
-    segment_idx = 0
+
+    if len(path) > 0: segment = path.split('/')
+    else: segment = []
+
+    basepath = ""
+    segmentpath = ""
+    controller_path = ""
 
     for ix in range(len(segment)):
-        segment_idx = ix
         if ix == 0: 
             _segment = segment
         else: 
@@ -96,19 +100,21 @@ def catch_all(module='', path=''):
         
         controller_path = os.path.join(PATH_PUBLIC, 'controller', module, _path , 'index.py')
         if os.path.isfile(controller_path):
+            basepath = _path
             break
         
         controller_path = os.path.join(PATH_PUBLIC, 'controller', module, _path + '.py')
         if os.path.isfile(controller_path):
+            basepath = _path
             break
 
     if os.path.isfile(controller_path) == False:
-        segment_idx = len(segment)
+        basepath = ""
         controller_path = os.path.join(PATH_PUBLIC, 'controller', module, 'index.py')
 
     controller = None
-    basepath = '/'.join(segment[:-segment_idx])
-    segmentpath = '/'.join(segment[-segment_idx:])
+    if len(basepath) > 0: segmentpath = path[len(basepath) + 1:]
+    else: segmentpath = path
 
     with open(controller_path, mode="r") as file:
         _tmp = {'Controller': None}
@@ -119,15 +125,12 @@ def catch_all(module='', path=''):
 
         fnname = segmentpath.split('/')[0]
         if hasattr(controller, fnname):
+            segmentpath = segmentpath[len(fnname)+1:]
             fnname = fnname
-            segment_idx = segment_idx - 1
         elif hasattr(controller, '__index__'):
             fnname = '__index__'
         else:
             flask.abort(404)
-
-        basepath = '/'.join(segment[:-segment_idx])
-        segmentpath = '/'.join(segment[-segment_idx:])
 
     # build framework object
     framework = season.framework.load(flask, module, segmentpath)
