@@ -33,7 +33,7 @@ class segment:
                 return k
         
         if _default is True:
-            self.framework.response.error(400)
+            self.framework.flask.abort(400)
 
         return _default
 
