@@ -160,13 +160,22 @@ def catch_all(module='', path=''):
 
     # process controller
     if controller is not None:
-        if hasattr(controller, '__startup__'):
-            res = getattr(controller, '__startup__')(framework)
-            if res is not None:
-                return res
+        controller.__framework__ = framework
+        try:
+            if hasattr(controller, '__startup__'):
+                res = getattr(controller, '__startup__')(framework)
+                if res is not None:
+                    return res
+        except Exception as e:
+            print('Error in ' + controller_path)
+            raise e
 
-        if hasattr(controller, fnname):
-            return getattr(controller, fnname)(framework)
+        try:
+            if hasattr(controller, fnname):
+                return getattr(controller, fnname)(framework)
+        except Exception as e:
+            print('Error in ' + controller_path)
+            raise e
 
     flask.abort(404)
 
