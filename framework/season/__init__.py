@@ -1,6 +1,7 @@
 from _include import loader
 import os
 import shutil
+import datetime
 
 from .framework import framework
 from .core import stdClass
@@ -138,4 +139,8 @@ for dirpath, dirname, interfacenames in os.walk(interfaces_dir):
             _code = 'import season\n' + _code
             exec(_code, _tmp)
             _build_interface(interfaces, _dir, interfacename, _tmp)
-        
+
+def json_default(value): 
+    if isinstance(value, datetime.date): 
+        return value.strftime('%Y-%m-%d %H:%M:%S') 
+    raise TypeError('not JSON serializable')

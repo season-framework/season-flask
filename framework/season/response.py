@@ -4,6 +4,7 @@ import os
 
 from .core import stdClass
 
+import season
 from _include import loader
 PATH_PROJECT = loader("PATH_PROJECT", "")
 PATH_APP = os.path.join(PATH_PROJECT, 'season-flask', 'public', 'websrc', 'app')
@@ -51,7 +52,7 @@ class response:
             obj = dict(obj)
         except:
             pass
-        obj = json.dumps(obj)
+        obj = json.dumps(obj, default=season.json_default)
         resp = self._flask.Response(str(obj))
         self.headers.set('Content-Type', 'application/json')
         return self._build(resp)

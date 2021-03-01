@@ -116,21 +116,22 @@ def catch_all(module='', path=''):
     if len(basepath) > 0: segmentpath = path[len(basepath) + 1:]
     else: segmentpath = path
 
-    with open(controller_path, mode="r") as file:
-        _tmp = {'Controller': None}
-        ctrlcode = file.read()
-        ctrlcode = 'import season\n' + ctrlcode
-        exec(ctrlcode, _tmp)
-        controller = _tmp['Controller']()
+    if os.path.isfile(controller_path) == True:
+        with open(controller_path, mode="r") as file:
+            _tmp = {'Controller': None}
+            ctrlcode = file.read()
+            ctrlcode = 'import season\n' + ctrlcode
+            exec(ctrlcode, _tmp)
+            controller = _tmp['Controller']()
 
-        fnname = segmentpath.split('/')[0]
-        if hasattr(controller, fnname):
-            segmentpath = segmentpath[len(fnname)+1:]
-            fnname = fnname
-        elif hasattr(controller, '__index__'):
-            fnname = '__index__'
-        else:
-            flask.abort(404)
+            fnname = segmentpath.split('/')[0]
+            if hasattr(controller, fnname):
+                segmentpath = segmentpath[len(fnname)+1:]
+                fnname = fnname
+            elif hasattr(controller, '__index__'):
+                fnname = '__index__'
+            else:
+                flask.abort(404)
 
     # build framework object
     framework = season.framework.load(flask, module, segmentpath)
@@ -156,7 +157,7 @@ def catch_all(module='', path=''):
                     return res
 
         except Exception as e:
-            pass
+            raise e
 
     # process controller
     if controller is not None:
@@ -167,14 +168,14 @@ def catch_all(module='', path=''):
                 if res is not None:
                     return res
         except Exception as e:
-            print('Error in ' + controller_path)
+            # print('Error in ' + controller_path)
             raise e
 
         try:
             if hasattr(controller, fnname):
                 return getattr(controller, fnname)(framework)
         except Exception as e:
-            print('Error in ' + controller_path)
+            # print('Error in ' + controller_path)
             raise e
 
     flask.abort(404)
