@@ -20,7 +20,8 @@ setup(
         'season = season.cmdtools:main [season]',
     ]},
     install_requires=[
-        'flask'
+        'flask',
+        'watchdog'
     ],
     python_requires='>=3.6'
 )
