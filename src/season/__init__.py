@@ -20,9 +20,9 @@ if inapp:
     PATH_FRAMEWORK = os.path.dirname(__file__)
     PATH_MODULES = os.path.join(PATH_WEBSRC, 'modules')
 
-    PATH_TEMPLATE = os.path.join(PATH_PROJECT, 'season-flask', 'public', 'templates')
-    PATH_CONTROLLER = os.path.join(PATH_PROJECT, 'season-flask', 'public', 'controller')
-    PATH_APP = os.path.join(PATH_PROJECT, 'season-flask', 'public', 'websrc', 'app')
+    PATH_TEMPLATE = os.path.join(PATH_PROJECT, 'public', 'templates')
+    PATH_CONTROLLER = os.path.join(PATH_PROJECT, 'public', 'controller')
+    PATH_APP = os.path.join(PATH_PROJECT, 'public', 'websrc', 'app')
 
     def _bootstrap():
         # build templates
@@ -41,7 +41,7 @@ if inapp:
             viewpath = os.path.join(PATH_WEBSRC, 'modules', module, 'view')
             if os.path.isdir(viewpath) == False:
                 continue
-            targetpath = os.path.join(PATH_PROJECT, 'season-flask', 'public', 'templates', module)
+            targetpath = os.path.join(PATH_PROJECT, 'public', 'templates', module)
 
             try:
                 os.symlink(viewpath, targetpath)
@@ -64,7 +64,7 @@ if inapp:
             ctrlpath = os.path.join(PATH_WEBSRC, 'modules', module, 'controller')
             if os.path.isdir(ctrlpath) == False:
                 continue
-            targetpath = os.path.join(PATH_PROJECT, 'season-flask', 'public', 'controller', module)
+            targetpath = os.path.join(PATH_PROJECT, 'public', 'controller', module)
 
             try:
                 os.symlink(ctrlpath, targetpath)
@@ -72,7 +72,7 @@ if inapp:
                 pass
 
         # build websrc
-        targetpath = os.path.join(PATH_PROJECT, 'season-flask', 'public', 'websrc')
+        targetpath = os.path.join(PATH_PROJECT, 'public', 'websrc')
         srcpath = os.path.join(PATH_WEBSRC)
 
         try:
