@@ -15,6 +15,8 @@ from argh import arg
 import urllib.request
 import psutil
 
+from .version import VERSION_STRING
+
 def download_url(url, save_path):
     with urllib.request.urlopen(url) as dl_file:
         with open(save_path, 'wb') as out_file:
@@ -110,10 +112,14 @@ def run():
         observer.join()
 
 def main():
+    epilog = "Copyright 2021 proin <proin@season.co.kr>. Licensed under the terms of the MIT license. Please see LICENSE in the source code for more information."
     parser = argh.ArghParser()
     parser.add_commands([
         create, run
     ])
+    parser.add_argument('--version',
+                    action='version',
+                    version='%(prog)s ' + VERSION_STRING)
     parser.dispatch()
 
 if __name__ == '__main__':
