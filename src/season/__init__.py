@@ -12,7 +12,7 @@ if inapp:
     from .framework import framework
     from .core import stdClass
 
-    __version__ = __VERSION__ = '0.1.0'
+    __version__ = __VERSION__ = '0.1.1'
 
     PATH_PROJECT = loader("PATH_PROJECT", "")
 

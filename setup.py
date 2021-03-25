@@ -6,7 +6,7 @@ SEASON_PKG_DIR = os.path.join(SRC_DIR, 'season')
 
 setup(
     name='season',
-    version='0.1.0',
+    version='0.1.1',
     description='web framework',
     url='https://github.com/season-framework/season-flask',
     author='proin',
