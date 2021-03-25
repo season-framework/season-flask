@@ -1,3 +1,4 @@
+import time
 import json
 import re
 import os
@@ -21,7 +22,6 @@ def create(projectname):
         shutil.rmtree(PROJECT_SRC)
         # print("Already exists project path '{}'".format(PROJECT_SRC))
         # return
-
     
     os.makedirs(PROJECT_SRC)
 
@@ -50,14 +50,32 @@ def create(projectname):
     f.write(config_sample)
     f.close()
 
-    
+def run():
+    from watchdog.observers import Observer
+    from watchdog.events import FileSystemEventHandler
 
-parser = argh.ArghParser()
-parser.add_commands([
-    create
-])
+    class Handler(FileSystemEventHandler):
+        @staticmethod
+        def on_any_event(event):
+            print('changed')
+
+    event_handler = Handler()
+    observer = Observer()
+    observer.schedule(event_handler, os.path.join(os.getcwd()), recursive=True)
+    observer.start()
+
+    try:
+        while True:
+            time.sleep(3)
+    finally:
+        observer.stop()
+        observer.join()
 
 def main():
+    parser = argh.ArghParser()
+    parser.add_commands([
+        create, run
+    ])
     parser.dispatch()
 
 if __name__ == '__main__':

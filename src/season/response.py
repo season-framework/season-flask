@@ -7,7 +7,7 @@ from .core import stdClass
 import season
 from _include import loader
 PATH_PROJECT = loader("PATH_PROJECT", "")
-PATH_APP = os.path.join(PATH_PROJECT, 'season-flask', 'public', 'websrc', 'app')
+PATH_APP = os.path.join(PATH_PROJECT, 'websrc', 'app')
 PATH_WEBSRC = os.path.join(PATH_PROJECT, 'websrc')
 PATH_MODULES = os.path.join(PATH_WEBSRC, 'modules')
 
@@ -59,7 +59,7 @@ class response:
 
     def render(self, template_uri, module=None, **args):
         if module is None: module = self.modulename
-        TEMPLATE_PATH = os.path.join(PATH_PROJECT, 'season-flask', 'public', 'templates', module, template_uri)
+        TEMPLATE_PATH = os.path.join(PATH_PROJECT, 'public', 'templates', module, template_uri)
         TEMPLATE_URI = os.path.join(module, template_uri)
         self.data.set(**args)
         if os.path.isfile(TEMPLATE_PATH):

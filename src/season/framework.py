@@ -14,7 +14,7 @@ from .config import config
 from .lib import lib
 
 PATH_PROJECT = loader("PATH_PROJECT", "")
-PATH_APP = os.path.join(PATH_PROJECT, 'season-flask', 'public', 'websrc', 'app')
+PATH_APP = os.path.join(PATH_PROJECT, 'websrc', 'app')
 PATH_WEBSRC = os.path.join(PATH_PROJECT, 'websrc')
 PATH_MODULES = os.path.join(PATH_WEBSRC, 'modules')
 

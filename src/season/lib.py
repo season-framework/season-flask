@@ -3,10 +3,11 @@ import re
 import os
 
 from .core import stdClass
+from .base import __base__
 
 from _include import loader
 PATH_PROJECT = loader("PATH_PROJECT", "")
-PATH_APP = os.path.join(PATH_PROJECT, 'season-flask', 'public', 'websrc', 'app')
+PATH_APP = os.path.join(PATH_PROJECT, 'websrc', 'app')
 PATH_WEBSRC = os.path.join(PATH_PROJECT, 'websrc')
 PATH_MODULES = os.path.join(PATH_WEBSRC, 'modules')
 
@@ -19,8 +20,9 @@ class lib(stdClass):
         if attr in self._cache:
             return self._cache[attr]
 
-        codepath = os.path.join(PATH_PROJECT, 'season-flask', 'framework', 'season', 'code', 'lib.py')
+        codepath = os.path.join(os.path.dirname(__file__), 'base.py')
         libpath = os.path.join(PATH_APP, 'lib', attr + '.py')
+        
         if os.path.isfile(libpath):
             f = open(codepath, 'r')
             prefix = f.read()

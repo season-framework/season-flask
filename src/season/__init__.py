@@ -21,8 +21,7 @@ if inapp:
     PATH_MODULES = os.path.join(PATH_WEBSRC, 'modules')
 
     PATH_TEMPLATE = os.path.join(PATH_PROJECT, 'public', 'templates')
-    PATH_CONTROLLER = os.path.join(PATH_PROJECT, 'public', 'controller')
-    PATH_APP = os.path.join(PATH_PROJECT, 'public', 'websrc', 'app')
+    PATH_APP = os.path.join(PATH_PROJECT, 'websrc', 'app')
 
     def _bootstrap():
         # build templates
@@ -47,45 +46,6 @@ if inapp:
                 os.symlink(viewpath, targetpath)
             except:
                 pass
-
-        # build controller
-        try:
-            shutil.rmtree(PATH_CONTROLLER)
-        except:
-            pass
-
-        try:
-            os.makedirs(PATH_CONTROLLER, exist_ok=True)
-        except:
-            pass
-
-        for module in os.listdir(PATH_MODULES):
-            if module[0] == '.': continue
-            ctrlpath = os.path.join(PATH_WEBSRC, 'modules', module, 'controller')
-            if os.path.isdir(ctrlpath) == False:
-                continue
-            targetpath = os.path.join(PATH_PROJECT, 'public', 'controller', module)
-
-            try:
-                os.symlink(ctrlpath, targetpath)
-            except:
-                pass
-
-        # build websrc
-        targetpath = os.path.join(PATH_PROJECT, 'public', 'websrc')
-        srcpath = os.path.join(PATH_WEBSRC)
-
-        try:
-            os.unlink(targetpath)
-        except:
-            pass
-
-        if os.path.isdir(srcpath):
-            try:
-                os.symlink(srcpath, targetpath)
-            except:
-                pass
-                
 
     # add interfaces
     interfaces = stdClass()

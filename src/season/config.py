@@ -6,7 +6,7 @@ from .core import stdClass
 from _include import loader
 PATH_PROJECT = loader("PATH_PROJECT", "")
 
-PATH_APP = os.path.join(PATH_PROJECT, 'season-flask', 'public', 'websrc', 'app')
+PATH_APP = os.path.join(PATH_PROJECT, 'websrc', 'app')
 PATH_WEBSRC = os.path.join(PATH_PROJECT, 'websrc')
 PATH_MODULES = os.path.join(PATH_WEBSRC, 'modules')
 
@@ -26,7 +26,6 @@ class config(stdClass):
             with open(config_path, mode="r") as file:
                 _tmp = {'config': None}
                 _code = file.read()
-                _code = 'from season import stdClass\nconfig = stdClass()\n' + _code
                 exec(_code, _tmp)
                 c.data = _tmp['config']
         except Exception as e:
