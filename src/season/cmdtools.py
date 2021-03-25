@@ -4,11 +4,16 @@ import re
 import os
 import shutil
 import zipfile
+import datetime
+
+import subprocess
+import multiprocessing as mp
 
 import argh
 from argh import arg
 
 import urllib.request
+import psutil
 
 def download_url(url, save_path):
     with urllib.request.urlopen(url) as dl_file:
@@ -50,23 +55,56 @@ def create(projectname):
     f.write(config_sample)
     f.close()
 
+cache = {}
+
+def run_ctrl():
+    publicpath = os.path.join(os.getcwd(), 'public')
+    cmd = "cd {} && python app.py".format(publicpath)
+    subprocess.call(cmd, shell=True)
+
 def run():
+    mp.freeze_support()
+    
     from watchdog.observers import Observer
     from watchdog.events import FileSystemEventHandler
+
+    proc = mp.Process(target=run_ctrl)
+    proc.start()
 
     class Handler(FileSystemEventHandler):
         @staticmethod
         def on_any_event(event):
-            print('changed')
+            cache['refresh'] = True
+            cache['lasttime'] = time.time() * 1000
 
     event_handler = Handler()
     observer = Observer()
-    observer.schedule(event_handler, os.path.join(os.getcwd()), recursive=True)
+    observer.schedule(event_handler, os.path.join(os.getcwd(), 'websrc'), recursive=True)
     observer.start()
 
     try:
+        cache['refresh'] = False
+        cache['lasttime'] = time.time() * 1000
+
         while True:
-            time.sleep(3)
+            nd = datetime.datetime.now()
+            now = time.time() * 1000
+            diff = now - cache['lasttime']
+            if cache['refresh'] and diff > 500:
+                print('\n\nrestarted at {}'.format(nd))
+                try:
+                    for child in psutil.Process(proc.pid).children(recursive=True):
+                        child.kill()
+                except Exception as e:
+                    pass
+                try:
+                    proc = mp.Process(target=run_ctrl)
+                    proc.start()
+                except Exception as e:
+                    pass
+                cache['refresh'] = False
+                
+            time.sleep(1)
     finally:
         observer.stop()
         observer.join()
