@@ -54,7 +54,6 @@ class framework:
             with open(model_path, mode="r") as file:
                 _tmp = {'Model': None}
                 _code = file.read()
-                _code = 'import season\n' + _code
                 exec(_code, _tmp)
                 fr._cache.model[model_path] = _tmp['Model'](fr)
                 return fr._cache.model[model_path]
