@@ -1,12 +1,17 @@
+import importlib.util
 import os
 from setuptools import setup, find_packages
 
 SRC_DIR = 'src'
 SEASON_PKG_DIR = os.path.join(SRC_DIR, 'season')
 
+spec = importlib.util.spec_from_file_location('version', os.path.join(SEASON_PKG_DIR, 'version.py'))
+version = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(version)
+
 setup(
     name='season',
-    version='0.1.1',
+    version=version.VERSION_STRING,
     description='web framework',
     url='https://github.com/season-framework/season-flask',
     author='proin',

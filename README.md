@@ -2,6 +2,8 @@
 
 ```bash
 pip install git+https://github.com/season-framework/season-flask
+# or
+pip install season
 ```
 
 ## Usage

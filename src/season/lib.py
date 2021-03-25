@@ -3,7 +3,6 @@ import re
 import os
 
 from .core import stdClass
-from .base import __base__
 
 from _include import loader
 PATH_PROJECT = loader("PATH_PROJECT", "")
@@ -20,23 +19,16 @@ class lib(stdClass):
         if attr in self._cache:
             return self._cache[attr]
 
-        codepath = os.path.join(os.path.dirname(__file__), 'base.py')
         libpath = os.path.join(PATH_APP, 'lib', attr + '.py')
         
         if os.path.isfile(libpath):
-            f = open(codepath, 'r')
-            prefix = f.read()
-            f.close()
-
             f = open(libpath, 'r')
             _code = f.read()
             f.close()
 
-            _code = prefix + '\n' + _code
             _tmp = stdClass()
             exec(_code, _tmp)
-
-            obj = getattr(_tmp, '__base__')(self.framework, _tmp)
+            obj = _tmp
             self._cache[attr] = obj
             return obj
 

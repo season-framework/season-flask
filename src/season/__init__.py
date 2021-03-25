@@ -11,8 +11,8 @@ if inapp:
 
     from .framework import framework
     from .core import stdClass
-
-    __version__ = __VERSION__ = '0.1.1'
+    from .version import VERSION_STRING
+    __version__ = __VERSION__ = VERSION_STRING
 
     PATH_PROJECT = loader("PATH_PROJECT", "")
 
