@@ -62,6 +62,7 @@ def create(projectname):
     os.makedirs(PATH_WEBSRC)
 
     # build default websrc
+    PATH_RESOURCES = os.path.join(PATH_WEBSRC, 'resources')
     PATH_MODULE = os.path.join(PATH_WEBSRC, 'modules')
     PATH_APP = os.path.join(PATH_WEBSRC, 'app')
     PATH_FILTER = os.path.join(PATH_APP, 'filter')
@@ -70,6 +71,7 @@ def create(projectname):
     PATH_MODEL = os.path.join(PATH_APP, 'model')
     PATH_LIB = os.path.join(PATH_APP, 'lib')
 
+    os.makedirs(PATH_RESOURCES)
     os.makedirs(PATH_MODULE)
     os.makedirs(PATH_APP)
     
@@ -169,6 +171,7 @@ def add(component, namespace, uri=None):
 
         if uri is not None:
             os.system('git clone {} {}'.format(uri, PATH_TARGET))
+            shutil.rmtree(os.path.join(PATH_TARGET, '.git'))
             return
 
         os.makedirs(PATH_TARGET)
