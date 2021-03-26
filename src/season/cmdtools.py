@@ -175,6 +175,7 @@ def add(component, namespace, uri=None):
             return
 
         os.makedirs(PATH_TARGET)
+        os.makedirs(os.path.join(PATH_TARGET, 'resources'))
         os.makedirs(os.path.join(PATH_TARGET, 'controller'))
         write_file(os.path.join(PATH_TARGET, 'controller', 'index.py'), SKELETON_MODULE_CONTROLLER_INDEX)
 
