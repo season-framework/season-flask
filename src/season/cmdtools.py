@@ -250,6 +250,9 @@ def config(args):
 
     PATH_CONFIG = os.path.join(os.getcwd(), 'sf.json')
 
+    if os.path.isfile(PATH_CONFIG) == False:
+        write_file(PATH_CONFIG, '{}')
+
     f = open(PATH_CONFIG)
     config = json.load(f)
     f.close()
