@@ -14,6 +14,7 @@ from argh import arg, expects_obj
 
 import urllib.request
 import psutil
+import subprocess
 
 from .version import VERSION_STRING
 from .skeleton import *
@@ -27,6 +28,13 @@ def download_url(url, save_path):
     with urllib.request.urlopen(url) as dl_file:
         with open(save_path, 'wb') as out_file:
             out_file.write(dl_file.read())
+
+def git(uri, path, dev):
+    output = os.system('git clone {} {}'.format(uri, path))
+    if os.path.isdir(os.path.join(PATH_TARGET, '.git')) == False:
+        raise Exception('Not git repo')
+
+    if dev is None: shutil.rmtree(os.path.join(PATH_TARGET, '.git'))
 
 @arg('projectname', default='sample-project', help='project name')
 def create(projectname):
@@ -183,27 +191,22 @@ def add(component, namespace, uri=None):
 
         if uri is not None:
             if '://' in uri:
-                os.system('git clone {} {}'.format(uri, PATH_TARGET))
-
-                if dev is None: shutil.rmtree(os.path.join(PATH_TARGET, '.git'))
+                git(uri, PATH_TARGET, dev)
             elif repo is not None:
-                uri = os.path.join(repo, uri)
-                os.system('git clone {} {}'.format(uri, PATH_TARGET))
-                if dev is None: shutil.rmtree(os.path.join(PATH_TARGET, '.git'))
+                git(uri, PATH_TARGET, dev)
             else:
                 print('module not found')
-                
             return
 
         try:
             if repo is not None:
                 uri = os.path.join(repo, namespace)
-                output = os.system('git clone {} {}'.format(uri, PATH_TARGET))
-                if dev is None: shutil.rmtree(os.path.join(PATH_TARGET, '.git'))
+                git(uri, PATH_TARGET, dev) 
                 return
         except:
             pass
 
+        print('build default module template...')
         os.makedirs(PATH_TARGET)
         os.makedirs(os.path.join(PATH_TARGET, 'resources'))
         os.makedirs(os.path.join(PATH_TARGET, 'controller'))
