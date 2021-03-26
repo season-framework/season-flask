@@ -10,7 +10,7 @@ import subprocess
 import multiprocessing as mp
 
 import argh
-from argh import arg
+from argh import arg, expects_obj
 
 import urllib.request
 import psutil
@@ -169,10 +169,36 @@ def add(component, namespace, uri=None):
             print("Module '{}' already exists".format(namespace))
             return
 
+        repo = None
+        PATH_CONFIG = os.path.join(os.getcwd(), 'sf.json')
+        if os.path.isfile(PATH_CONFIG):
+            f = open(PATH_CONFIG)
+            config = json.load(f)
+            f.close()
+            if 'repo' in config:
+                repo = config['repo']
+
         if uri is not None:
-            os.system('git clone {} {}'.format(uri, PATH_TARGET))
-            shutil.rmtree(os.path.join(PATH_TARGET, '.git'))
+            if '://' in uri:
+                os.system('git clone {} {}'.format(uri, PATH_TARGET))
+                shutil.rmtree(os.path.join(PATH_TARGET, '.git'))
+            elif repo is not None:
+                uri = os.path.join(repo, uri)
+                os.system('git clone {} {}'.format(uri, PATH_TARGET))
+                shutil.rmtree(os.path.join(PATH_TARGET, '.git'))
+            else:
+                print('module not found')
+                
             return
+
+        try:
+            if repo is not None:
+                uri = os.path.join(repo, namespace)
+                output = os.system('git clone {} {}'.format(uri, PATH_TARGET))
+                shutil.rmtree(os.path.join(PATH_TARGET, '.git'))
+                return
+        except:
+            pass
 
         os.makedirs(PATH_TARGET)
         os.makedirs(os.path.join(PATH_TARGET, 'resources'))
@@ -207,11 +233,36 @@ def add(component, namespace, uri=None):
 
         write_file(PATH_TARGET, SKELETON_MODULE_MODEL_DATA)
 
+@arg('--set', default=None, help='repo')
+@arg('--unset', default=None, help='repo')
+@arg('--value', default=None, help='https://git')
+@expects_obj
+def config(args):
+    PATH_PUBIC = os.path.join(os.getcwd(), 'public')
+    PATH_WEBSRC = os.path.join(os.getcwd(), 'websrc')
+    if os.path.isdir(PATH_PUBIC) == False or os.path.isdir(PATH_WEBSRC) == False:
+        print("Move to season-flask project root location")
+        return
+
+    PATH_CONFIG = os.path.join(os.getcwd(), 'sf.json')
+
+    f = open(PATH_CONFIG)
+    config = json.load(f)
+    f.close()
+
+    if args.set is not None:
+        config[args.set] = args.value
+
+    if args.unset is not None:
+        del config[args.unset]
+
+    write_file(PATH_CONFIG, json.dumps(config, sort_keys=True, indent=4))
+
 def main():
     epilog = "Copyright 2021 proin <proin@season.co.kr>. Licensed under the terms of the MIT license. Please see LICENSE in the source code for more information."
     parser = argh.ArghParser()
     parser.add_commands([
-        create, run, add
+        create, run, add, config
     ])
     parser.add_argument('--version',
                     action='version',
