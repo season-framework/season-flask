@@ -26,9 +26,8 @@ def download_url(url, save_path):
 def create(projectname):
     PROJECT_SRC = os.path.join(os.getcwd(), projectname)
     if os.path.isdir(PROJECT_SRC):
-        shutil.rmtree(PROJECT_SRC)
-        # print("Already exists project path '{}'".format(PROJECT_SRC))
-        # return
+        print("Already exists project path '{}'".format(PROJECT_SRC))
+        return
     
     os.makedirs(PROJECT_SRC)
 
