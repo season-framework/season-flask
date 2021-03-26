@@ -16,6 +16,12 @@ import urllib.request
 import psutil
 
 from .version import VERSION_STRING
+from .skeleton import *
+
+def write_file(path, content):
+    f = open(path, mode="w")
+    f.write(content)
+    f.close()
 
 def download_url(url, save_path):
     with urllib.request.urlopen(url) as dl_file:
@@ -31,10 +37,6 @@ def create(projectname):
     
     os.makedirs(PROJECT_SRC)
 
-    # make websrc
-    WEBSRC = os.path.join(PROJECT_SRC, 'websrc')
-    os.makedirs(WEBSRC)
-
     # build web server
     PUBLIC_ZIP = os.path.join(PROJECT_SRC, 'public.zip')
     PUBLIC_SRC = os.path.join(PROJECT_SRC, 'public')
@@ -45,8 +47,7 @@ def create(projectname):
     shutil.move(os.path.join(PROJECT_SRC, 'season-flask-public-main'), PUBLIC_SRC)
     os.remove(PUBLIC_ZIP)
 
-    # shutil.copy(os.path.join(PUBLIC_SRC, 'config.sample.py'), os.path.join(PUBLIC_SRC, 'config.py'))
-
+    # create public config
     f = open(os.path.join(PUBLIC_SRC, 'config.sample.py'), mode="r")
     config_sample = f.read()
     config_sample = config_sample.replace('<project-path>', PROJECT_SRC)
@@ -56,8 +57,42 @@ def create(projectname):
     f.write(config_sample)
     f.close()
 
+    # make websrc
+    PATH_WEBSRC = os.path.join(PROJECT_SRC, 'websrc')
+    os.makedirs(PATH_WEBSRC)
+
+    # build default websrc
+    PATH_MODULE = os.path.join(PATH_WEBSRC, 'modules')
+    PATH_APP = os.path.join(PATH_WEBSRC, 'app')
+    PATH_FILTER = os.path.join(PATH_APP, 'filter')
+    PATH_CONFIG = os.path.join(PATH_APP, 'config')
+    PATH_INTERFACE = os.path.join(PATH_APP, 'interfaces')
+    PATH_MODEL = os.path.join(PATH_APP, 'model')
+    PATH_LIB = os.path.join(PATH_APP, 'lib')
+
+    os.makedirs(PATH_MODULE)
+    os.makedirs(PATH_APP)
+    
+    os.makedirs(PATH_CONFIG)
+    write_file(os.path.join(PATH_CONFIG, 'config.py'), SKELETON_CONFIG)
+    write_file(os.path.join(PATH_CONFIG, 'database.py'), SKELETON_CONFIG_DATABASE)
+
+    os.makedirs(PATH_INTERFACE)
+    write_file(os.path.join(PATH_INTERFACE, 'model.py'), SKELETON_INTERFACE_MODEL)
+    write_file(os.path.join(PATH_INTERFACE, 'controller.py'), SKELETON_INTERFACE_CONTROLLER)
+    
+    os.makedirs(PATH_FILTER)
+    write_file(os.path.join(PATH_FILTER, 'indexfilter.py'), SKELETON_FILTER)
+
+    os.makedirs(PATH_LIB)
+    write_file(os.path.join(PATH_LIB, 'util.py'), SKELETON_MODULE_LIB_UTIL)
+
+    os.makedirs(PATH_MODEL)
+    write_file(os.path.join(PATH_MODEL, 'data.py'), SKELETON_MODULE_MODEL_DATA)
+
 cache = {}
 
+# for run
 def run_ctrl():
     publicpath = os.path.join(os.getcwd(), 'public')
     cmd = "cd {} && python app.py".format(publicpath)
@@ -110,11 +145,69 @@ def run():
         observer.stop()
         observer.join()
 
+@arg('component', default=None, help='module | filter | model')
+@arg('namespace', default=None, help='name')
+@arg('--uri', help='https://github.com/season-framework/module-name')
+def add(component, namespace, uri=None):
+    PATH_PUBIC = os.path.join(os.getcwd(), 'public')
+    PATH_WEBSRC = os.path.join(os.getcwd(), 'websrc')
+    PATH_MODULE = os.path.join(PATH_WEBSRC, 'modules')
+    PATH_APP = os.path.join(PATH_WEBSRC, 'app')
+    PATH_FILTER = os.path.join(PATH_APP, 'filter')
+    PATH_MODEL = os.path.join(PATH_APP, 'model')
+    
+    if os.path.isdir(PATH_PUBIC) == False or os.path.isdir(PATH_WEBSRC) == False:
+        print("Move to season-flask project root location")
+        return
+        
+    if component == 'module':
+        PATH_TARGET = os.path.join(PATH_MODULE, namespace)
+
+        if os.path.isdir(PATH_TARGET):
+            print("Module '{}' already exists".format(namespace))
+            return
+
+        if uri is not None:
+            os.system('git clone {} {}'.format(uri, PATH_TARGET))
+            return
+
+        os.makedirs(PATH_TARGET)
+        os.makedirs(os.path.join(PATH_TARGET, 'controller'))
+        write_file(os.path.join(PATH_TARGET, 'controller', 'index.py'), SKELETON_MODULE_CONTROLLER_INDEX)
+
+        os.makedirs(os.path.join(PATH_TARGET, 'model'))
+        write_file(os.path.join(PATH_TARGET, 'model', 'data.py'), SKELETON_MODULE_MODEL_DATA)
+
+        os.makedirs(os.path.join(PATH_TARGET, 'lib'))
+        write_file(os.path.join(PATH_TARGET, 'lib', 'util.py'), SKELETON_MODULE_LIB_UTIL)
+
+        os.makedirs(os.path.join(PATH_TARGET, 'view'))
+        write_file(os.path.join(PATH_TARGET, 'view', 'default.pug'), SKELETON_MODULE_VIEW_DEFAULT)
+        write_file(os.path.join(PATH_TARGET, 'view', 'mainpage.pug'), SKELETON_MODULE_VIEW_DEFAULT)
+
+    if component == 'filter':
+        PATH_TARGET = os.path.join(PATH_FILTER, namespace + '.py')
+
+        if os.path.isfile(PATH_TARGET):
+            print("Filter '{}' already exists".format(namespace))
+            return
+
+        write_file(PATH_TARGET, SKELETON_FILTER)
+
+    if component == 'model':
+        PATH_TARGET = os.path.join(PATH_MODEL, namespace + '.py')
+
+        if os.path.isfile(PATH_TARGET):
+            print("Model '{}' already exists".format(namespace))
+            return
+
+        write_file(PATH_TARGET, SKELETON_MODULE_MODEL_DATA)
+
 def main():
     epilog = "Copyright 2021 proin <proin@season.co.kr>. Licensed under the terms of the MIT license. Please see LICENSE in the source code for more information."
     parser = argh.ArghParser()
     parser.add_commands([
-        create, run
+        create, run, add
     ])
     parser.add_argument('--version',
                     action='version',

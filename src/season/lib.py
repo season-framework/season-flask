@@ -19,8 +19,19 @@ class lib(stdClass):
         if attr in self._cache:
             return self._cache[attr]
 
+        libpath = os.path.join(PATH_MODULES, self.framework._modulename,'lib', attr + '.py')
+        if os.path.isfile(libpath):
+            f = open(libpath, 'r')
+            _code = f.read()
+            f.close()
+
+            _tmp = stdClass()
+            exec(_code, _tmp)
+            obj = _tmp
+            self._cache[attr] = obj
+            return obj
+
         libpath = os.path.join(PATH_APP, 'lib', attr + '.py')
-        
         if os.path.isfile(libpath):
             f = open(libpath, 'r')
             _code = f.read()

@@ -12,7 +12,9 @@ spec.loader.exec_module(version)
 setup(
     name='season',
     version=version.VERSION_STRING,
-    description='web framework',
+    description='web framework based on flask',
+    long_description=open('README.md').read(),
+    long_description_content_type='text/markdown', 
     url='https://github.com/season-framework/season-flask',
     author='proin',
     author_email='proin@season.co.kr',
@@ -22,11 +24,14 @@ setup(
     include_package_data=True,
     zip_safe=False,
     entry_points={'console_scripts': [
-        'season = season.cmdtools:main [season]',
+        'sf = season.cmdtools:main [season]',
     ]},
     install_requires=[
         'flask',
         'watchdog'
     ],
-    python_requires='>=3.6'
+    python_requires='>=3.6',
+    classifiers=[
+        'License :: OSI Approved :: MIT License'
+    ] 
 )
