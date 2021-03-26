@@ -25,6 +25,15 @@ sf add filter testfilter
 sf add model testset
 ```
 
+- add repo
+
+```bash
+cd <your-project-path>
+sf config --set repo --value https://git.season.co.kr/season-flask # git repo project root uri of your system
+sf add module something  # git from https://git.season.co.kr/season-flask/something, if not exists build default
+sf config --unset repo
+```
+
 - start
 
 ```bash
