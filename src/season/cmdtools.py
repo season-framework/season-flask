@@ -170,6 +170,7 @@ def add(component, namespace, uri=None):
             return
 
         repo = None
+        dev = None
         PATH_CONFIG = os.path.join(os.getcwd(), 'sf.json')
         if os.path.isfile(PATH_CONFIG):
             f = open(PATH_CONFIG)
@@ -177,15 +178,18 @@ def add(component, namespace, uri=None):
             f.close()
             if 'repo' in config:
                 repo = config['repo']
+            if 'dev' in config:
+                dev = config['dev']
 
         if uri is not None:
             if '://' in uri:
                 os.system('git clone {} {}'.format(uri, PATH_TARGET))
-                shutil.rmtree(os.path.join(PATH_TARGET, '.git'))
+
+                if dev is None: shutil.rmtree(os.path.join(PATH_TARGET, '.git'))
             elif repo is not None:
                 uri = os.path.join(repo, uri)
                 os.system('git clone {} {}'.format(uri, PATH_TARGET))
-                shutil.rmtree(os.path.join(PATH_TARGET, '.git'))
+                if dev is None: shutil.rmtree(os.path.join(PATH_TARGET, '.git'))
             else:
                 print('module not found')
                 
@@ -195,7 +199,7 @@ def add(component, namespace, uri=None):
             if repo is not None:
                 uri = os.path.join(repo, namespace)
                 output = os.system('git clone {} {}'.format(uri, PATH_TARGET))
-                shutil.rmtree(os.path.join(PATH_TARGET, '.git'))
+                if dev is None: shutil.rmtree(os.path.join(PATH_TARGET, '.git'))
                 return
         except:
             pass
