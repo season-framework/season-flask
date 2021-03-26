@@ -35,6 +35,8 @@ class framework:
         fr.config = config
         fr.lib = lib(fr)
 
+        fr.response.data.set(module=modulename)
+
         def model(modelname, module=modulename):
             model_path = None
             if module is not None:
