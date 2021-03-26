@@ -31,7 +31,7 @@ def download_url(url, save_path):
 
 def git(uri, path, dev):
     output = os.system('git clone {} {}'.format(uri, path))
-    if os.path.isdir(os.path.join(PATH_TARGET, '.git')) == False:
+    if os.path.isdir(os.path.join(path, '.git')) == False:
         raise Exception('Not git repo')
 
     if dev is None: shutil.rmtree(os.path.join(PATH_TARGET, '.git'))
