@@ -193,6 +193,7 @@ def add(component, namespace, uri=None):
             if '://' in uri:
                 git(uri, PATH_TARGET, dev)
             elif repo is not None:
+                uri = os.path.join(repo, uri)
                 git(uri, PATH_TARGET, dev)
             else:
                 print('module not found')
