@@ -34,7 +34,7 @@ def git(uri, path, dev):
     if os.path.isdir(os.path.join(path, '.git')) == False:
         raise Exception('Not git repo')
 
-    if dev is None: shutil.rmtree(os.path.join(PATH_TARGET, '.git'))
+    if dev is None: shutil.rmtree(os.path.join(path, '.git'))
 
 @arg('projectname', default='sample-project', help='project name')
 def create(projectname):
