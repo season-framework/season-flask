@@ -28,7 +28,11 @@ setup(
     ]},
     install_requires=[
         'flask',
-        'watchdog'
+        'watchdog',
+        'argh',
+        'psutil',
+        'pypugjs',
+        'lesscpy'
     ],
     python_requires='>=3.6',
     classifiers=[
