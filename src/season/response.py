@@ -83,6 +83,10 @@ class response:
             for key, value in args.items():
                 self.data[key] = value
 
+        def set_json(self, **args):
+            for key, value in args.items():
+                self.data[key] = json.dumps(value, default=season.json_default)
+
     # internal classes
     class _headers:
         def __init__(self):

@@ -146,6 +146,8 @@ class MySQL:
         rows = cur.execute(sql, data)
         if fetch:
             rows = cur.fetchall()
+        else:
+            con.commit()
         con.close()
         return rows
 
@@ -189,8 +191,55 @@ class MySQL:
             print(e)
             return None
 
+    def rows(self, **values):
+        try:
+            tablename = self.tablename
+            fields = self.fields()
 
-    def insert(self, values):
+            w = []
+            ps = []
+
+            orderby = None
+            if 'orderby' in values:
+                orderby = values['orderby']
+                del values['orderby']
+
+            limit = None
+            if 'limit' in values:
+                limit = values['limit']
+                del values['limit']
+
+            where = None
+            if 'where' in values:
+                where = values['where']
+                del values['where']
+
+            for key in values:
+                if key not in fields.columns: continue
+                w.append('`' + key + '`=%s')
+                ps.append(str(values[key]))
+
+            if len(w) > 0:
+                w = join(w, f=' AND ')
+                if where is not None: sql = 'SELECT * FROM `' + tablename + '` WHERE (' + where + ') AND ' + w
+                else: sql = 'SELECT * FROM `' + tablename + '` WHERE ' + w
+            elif where is not None:
+                sql = 'SELECT * FROM `' + tablename + '` WHERE ' + where
+            else:
+                sql = 'SELECT * FROM `' + tablename + '`'
+            
+            if orderby is not None:
+                sql = sql + ' ' + orderby
+            if limit is not None:
+                sql = sql + ' ' + limit
+
+            res = self.query(sql, data=ps, fetch=True)            
+            return res
+
+        except Exception as e:
+            return None
+
+    def insert(self, values, **fn):
         try:
             tablename = self.tablename
             fields = self.fields()
@@ -202,8 +251,11 @@ class MySQL:
             for key in values:
                 if key not in fields.columns: continue
                 f.append('`' + key + '`')
-                v.append('%s')
-                ps.append(str(values[key]))
+                if key in fn:
+                    v.append('{}("{}")'.format(fn[key], str(values[key])))
+                else:
+                    v.append('%s')
+                    ps.append(str(values[key]))
 
             f = join(f, f=',')
             v = join(v, f=',')
@@ -218,7 +270,7 @@ class MySQL:
         except Exception as e:
             return e
 
-    def upsert(self, values):
+    def upsert(self, values, **fn):
         try:
             tablename = self.tablename
             fields = self.fields()
@@ -231,9 +283,13 @@ class MySQL:
             for key in values:
                 if key not in fields.columns: continue
                 f.append('`' + key + '`')
-                v.append('%s')
-                s.append('`' + key + '`=%s')
-                ps.append(str(values[key]))
+                if key in fn:
+                    v.append('{}("{}")'.format(fn[key], str(values[key])))
+                    s.append('`{}`={}("{}")'.format(key, fn[key], str(values[key])))
+                else:
+                    v.append('%s')
+                    s.append('`' + key + '`=%s')
+                    ps.append(str(values[key]))
 
             f = join(f, f=',')
             v = join(v, f=',')
