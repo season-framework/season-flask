@@ -1,5 +1,3 @@
-# -*- coding: utf-8 -*-
-
 import os
 import traceback
 import flask
@@ -40,8 +38,12 @@ class bootstrap:
         self.framework = framework
 
     def bootstrap(self, app):
+        ERROR_INFO = stdClass()
+
         HTTP_METHODS = ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'CONNECT', 'OPTIONS', 'TRACE', 'PATCH']
         framework = self.framework
+
+        framework.core.build.template()
 
         # response handler
         @app.errorhandler(framework.core.CLASS.RESPONSE.STATUS)
@@ -51,13 +53,20 @@ class bootstrap:
             
         # Handler
         handler = stdClass()
-        handler.onerror = framework.config.load().get('onError', None)
-        handler.before_request = framework.config.load().get('beforeRequest', None)
-        handler.after_request = framework.config.load().get('afterRequest', None)
+        handler.onerror = framework.config.load().get('on_error', None)
+        handler.before_request = framework.config.load().get('before_request', None)
+        handler.after_request = framework.config.load().get('after_request', None)
+        handler.build = framework.config.load().get('build', None)
+        handler.build_resource = framework.config.load().get('build_resource', None)
+
+        app.jinja_env.add_extension('pypugjs.ext.jinja.PyPugJSExtension')
+        if handler.build is not None:
+            handler.build(app)
 
         # Exception Handler 
         @app.errorhandler(HTTPException)
         def handle_exception_http(e):
+            print("[ERROR TRACEBACK URL] " + ERROR_INFO.path)
             if handler.onerror is not None:
                 try:
                     framework.response.set_status(e.code)
@@ -71,6 +80,10 @@ class bootstrap:
         @app.errorhandler(Exception)
         def handle_exception(e):
             if type(e) == framework.core.CLASS.RESPONSE.STATUS: return handle_response(e)
+            
+            # TODO: error logging by option
+
+            print("[ERROR TRACEBACK URL] " + ERROR_INFO.path)
             traceback.print_exc()
             if handler.onerror is not None:
                 try:
@@ -85,6 +98,7 @@ class bootstrap:
         @app.before_request
         def before_request():
             path = flask.request.path
+            ERROR_INFO.path = path
             path = path.split("/")
             path = path[1:]
             if len(path) > 0:
@@ -116,14 +130,15 @@ class bootstrap:
                     if os.path.isfile(controller_path):
                         return module, module_path, controller_path, "/".join(uri_path)
                         
-                flask.abort(404)
-                
+                return "", "", "", ""
+
             module, module_path, controller_path, segment_path = module_finder()
 
-            framework.modulename = module
-            framework.modulepath = module_path
-            framework.controllerpath = controller_path
-            framework.segmentpath = segment_path
+            ERROR_INFO.module = framework.modulename = module
+            ERROR_INFO.modulepath = framework.modulepath = module_path
+            ERROR_INFO.controllerpath = framework.controllerpath = controller_path
+            ERROR_INFO.segmentpath = framework.segmentpath = segment_path
+
             framework._cache = stdClass()
             framework._cache.model = stdClass()
             framework.flask = flask
@@ -152,9 +167,9 @@ class bootstrap:
                 if os.path.isfile(model_path) == False:
                     framework.response.error(500, 'Model Not Found')
 
-                with open(model_path, mode="r") as file:
+                with open(model_path, mode="rb") as file:
                     _tmp = {'Model': None}
-                    _code = file.read()
+                    _code = file.read().decode('utf-8')
                     exec(_code, _tmp)
                     framework._cache.model[model_path] = _tmp['Model'](framework)
                     return framework._cache.model[model_path]
@@ -186,6 +201,9 @@ class bootstrap:
                 resource_filepath = "/".join(path[idx:])
                 resource_dirpath = os.path.join(framework.core.PATH.WEBSRC, 'modules', module, 'resources')
                 if os.path.isfile(os.path.join(resource_dirpath, resource_filepath)):
+                    if handler.build_resource is not None:
+                        res = handler.build_resource(resource_dirpath, resource_filepath)
+                        if res is not None: return res
                     return flask.send_from_directory(resource_dirpath, resource_filepath)
             
             # global resource
@@ -193,6 +211,9 @@ class bootstrap:
             if os.path.isfile(resource_abspath):
                 resource_filepath = os.path.basename(resource_abspath)
                 resource_dirpath = os.path.dirname(resource_abspath)
+                if handler.build_resource is not None:
+                    res = handler.build_resource(resource_dirpath, resource_filepath)
+                    if res is not None: return res
                 return flask.send_from_directory(resource_dirpath, resource_filepath)
 
             flask.abort(404)
@@ -219,9 +240,9 @@ class bootstrap:
                 if os.path.isfile(filter_path) == False:
                     continue
                     
-                file = open(filter_path, mode="r")
+                file = open(filter_path, mode="rb")
                 _tmp = {'process': None}
-                _code = file.read()
+                _code = file.read().decode('utf-8')
                 file.close()
                 exec(_code, _tmp)
                 filter_fn = _tmp['process']
@@ -230,12 +251,19 @@ class bootstrap:
                     return res
                 
             # process controller
-            file = open(controller_path, mode="r")
+            if os.path.isfile(controller_path) == False:
+                flask.abort(404)
+
+            file = open(controller_path, mode="rb")
             _tmp = {'Controller': None}
-            ctrlcode = file.read()
+            ctrlcode = file.read().decode('utf-8')
             file.close()
             exec(ctrlcode, _tmp)
-            controller = _tmp['Controller']()
+            try:
+                controller = _tmp['Controller'](framework)
+            except:
+                controller = _tmp['Controller']()
+                
             fnname = segment_path.split('/')[0]
             if hasattr(controller, fnname):
                 segment_path = segment_path[len(fnname)+1:]
@@ -247,6 +275,8 @@ class bootstrap:
             else:
                 flask.abort(404)
 
+            framework.segmentpath = segment_path
+
             if controller is not None:
                 controller.__framework__ = framework
 
@@ -257,6 +287,8 @@ class bootstrap:
                 
                 if hasattr(controller, fnname):
                     return getattr(controller, fnname)(framework)
+                    
+
 
             flask.abort(404)
         

@@ -1,5 +1,4 @@
-# -*- coding: utf-8 -*-
-
+import flask
 import json
 import os
 
@@ -30,11 +29,10 @@ class response:
         return self._build(resp)
 
     def download(self, filepath, as_attachment=True, filename=None):
-        try:
+        if os.path.isfile(filepath):
             resp = self._flask.send_file(filepath, as_attachment=as_attachment, attachment_filename=filename)
             return self._build(resp)
-        except:
-            return self.error(404)
+        flask.abort(404)
     
     def send(self, message, content_type=None):
         resp = self._flask.Response(str(message))
@@ -54,15 +52,15 @@ class response:
 
     def render(self, template_uri, module=None, **args):
         if module is None: module = self.modulename
-        TEMPLATE_PATH = os.path.join(self.framework.core.PATH.PROJECT, 'public', 'templates', module, template_uri)
+        TEMPLATE_PATH = os.path.join(self.framework.core.PATH.TEMPLATE, module, template_uri)
         TEMPLATE_URI = os.path.join(module, template_uri)
         self.data.set(**args)
         if os.path.isfile(TEMPLATE_PATH):
             data = self.data.get()
             resp = self._flask.render_template(TEMPLATE_URI, **data)
-            return self._build(resp)
+            return self.send(resp, "text/html")
 
-        self.error(404)
+        flask.abort(404)
 
     # template varialbes
     class _data:
@@ -107,7 +105,7 @@ class response:
         headers = self.headers.get()
         for key in headers:
             response.headers[key] = headers[key]
-
+        
         if self.status_code is not None:
             response.status_code = self.status_code
         else:

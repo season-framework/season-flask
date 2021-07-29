@@ -1,7 +1,6 @@
-# -*- coding: utf-8 -*-
-
 import os
 import datetime
+import shutil
 
 from .util.bootstrap import bootstrap
 from .util.stdclass import stdClass
@@ -29,78 +28,8 @@ core.CLASS.RESPONSE = response
 core.CLASS.LIB = lib
 core.CLASS.RESPONSE.STATUS = status
 
-# json_default
-def json_default(value): 
-    if isinstance(value, datetime.date): 
-        return value.strftime('%Y-%m-%d %H:%M:%S') 
-    raise str(value)
-
-core.json_default = json_default
-
-# interface loader
-def _build_interface(obj, keys, instname, inst, lv=0):
-    if len(keys) == 0 and obj is not None:
-        bname = os.path.splitext(os.path.basename(instname))[0]
-        obj[bname] = inst
-        return obj
-
-    if lv >= len(keys):
-        bname = os.path.splitext(os.path.basename(instname))[0]
-        if obj is not None: _obj = obj
-        else: _obj = stdClass()
-        _obj[bname] = inst
-        return _obj
-
-    if obj is None: obj = stdClass()
-    key = keys[lv]
-
-    if key in obj:
-        obj[key] = _build_interface(obj[key], keys, instname, inst, lv=lv+1)
-    else: 
-        obj[key] = _build_interface(None, keys, instname, inst, lv=lv+1)
-
-    return obj
-
-# load package defined interface, season.core.interfaces.*
-core.interfaces = stdClass()
-interfaces_dir = os.path.join(core.PATH.FRAMEWORK, 'framework', 'interfaces')
-for dirpath, dirname, interfacenames in os.walk(interfaces_dir):
-    
-    if len(interfacenames) == 0: continue
-    _dir = dirpath[len(interfaces_dir) + 1:]
-    if len(_dir) == 0:
-        _dir = []
-    else:
-        _dir = _dir.split('/')
-    
-    for interfacename in interfacenames:
-        _class = os.path.join(dirpath, interfacename)
-        with open(_class, mode="r") as file:
-            _tmp = stdClass()
-            _code = file.read()
-            exec(_code, _tmp)
-            _build_interface(core.interfaces, _dir, interfacename, _tmp)
-
-# load user defined interface: season.interfaces.*
 interfaces = stdClass()
-interfaces_dir = os.path.join(core.PATH.APP, 'interfaces')
-for dirpath, dirname, interfacenames in os.walk(interfaces_dir):
-    if len(interfacenames) == 0: continue
-    _dir = dirpath[len(interfaces_dir) + 1:]
-    if len(_dir) == 0:
-        _dir = []
-    else:
-        _dir = _dir.split('/')
-    
-    for interfacename in interfacenames:
-        _class = os.path.join(dirpath, interfacename)
-        with open(_class, mode="r") as file:
-            _tmp = stdClass()
-            _code = file.read()
-            exec(_code, _tmp)
-            _build_interface(interfaces, _dir, interfacename, _tmp)
 
-# load config
 class config(stdClass):
     def __init__(self, name='config', data=stdClass()):
         self.data = data
@@ -114,9 +43,9 @@ class config(stdClass):
             c.data = dict()
 
         try:
-            with open(config_path, mode="r") as file:
+            with open(config_path, mode="rb") as file:
                 _tmp = {'config': None}
-                _code = file.read()
+                _code = file.read().decode('utf-8')
                 exec(_code, _tmp)
                 c.data = _tmp['config']
         except Exception as e:
@@ -131,9 +60,122 @@ class config(stdClass):
             return self.data[key]
         return _default
 
-framework = stdClass()
-framework.core = core
-framework.interfaces = interfaces
-framework.config = config
+def build_template():
+    try:
+        shutil.rmtree(core.PATH.TEMPLATE)
+    except:
+        pass
 
-bootstrap = bootstrap(framework).bootstrap
+    try:
+        os.makedirs(core.PATH.TEMPLATE, exist_ok=True)
+    except:
+        pass
+
+    def find_viewpath(directory):
+        paths = []
+        for (path, _, filenames) in os.walk(directory):
+            viewpath = os.path.join(path, "view")
+            if os.path.isdir(viewpath):
+                paths.append(viewpath)
+        return paths
+
+    viewpaths = find_viewpath(core.PATH.MODULES)
+    for viewpath in viewpaths:
+        if os.path.isdir(viewpath) == False: continue
+        module = viewpath[len(core.PATH.MODULES)+1:-5]
+        targetpath = os.path.join(core.PATH.TEMPLATE, module)
+        try:
+            os.makedirs(os.path.dirname(targetpath), exist_ok=True)
+        except:
+            pass
+        try:
+            os.symlink(viewpath, targetpath)
+        except:
+            pass
+
+core.build = stdClass()
+core.build.template = build_template
+
+if os.path.isdir(core.PATH.WEBSRC):
+    # json_default
+    def json_default(value): 
+        if isinstance(value, datetime.date): 
+            return value.strftime('%Y-%m-%d %H:%M:%S') 
+        raise str(value)
+
+    core.json_default = json_default
+
+    # interface loader
+    def _build_interface(obj, keys, instname, inst, lv=0):
+        if len(keys) == 0 and obj is not None:
+            bname = os.path.splitext(os.path.basename(instname))[0]
+            obj[bname] = inst
+            return obj
+
+        if lv >= len(keys):
+            bname = os.path.splitext(os.path.basename(instname))[0]
+            if obj is not None: _obj = obj
+            else: _obj = stdClass()
+            _obj[bname] = inst
+            return _obj
+
+        if obj is None: obj = stdClass()
+        key = keys[lv]
+
+        if key in obj:
+            obj[key] = _build_interface(obj[key], keys, instname, inst, lv=lv+1)
+        else: 
+            obj[key] = _build_interface(None, keys, instname, inst, lv=lv+1)
+
+        return obj
+
+    # load package defined interface, season.core.interfaces.*
+    core.interfaces = stdClass()
+    interfaces_dir = os.path.join(core.PATH.FRAMEWORK, 'framework', 'interfaces')
+    for dirpath, dirname, interfacenames in os.walk(interfaces_dir):
+        if len(interfacenames) == 0: continue
+        _dir = dirpath[len(interfaces_dir) + 1:]
+        if len(_dir) == 0:
+            _dir = []
+        else:
+            _dir = _dir.split('/')
+        
+        for interfacename in interfacenames:
+            _, ext = os.path.splitext(interfacename)
+            if ext != '.py': continue
+            _class = os.path.join(dirpath, interfacename)
+            file = open(_class, mode="rb")
+            _tmp = stdClass()
+            _code = file.read().decode('utf-8')
+            file.close()
+            exec(_code, _tmp)
+            _build_interface(core.interfaces, _dir, interfacename, _tmp)
+
+    # load user defined interface: season.interfaces.*
+    interfaces_dir = os.path.join(core.PATH.APP, 'interfaces')
+    for dirpath, dirname, interfacenames in os.walk(interfaces_dir):
+        if len(interfacenames) == 0: continue
+        _dir = dirpath[len(interfaces_dir) + 1:]
+        if len(_dir) == 0:
+            _dir = []
+        else:
+            _dir = _dir.split('/')
+        
+        for interfacename in interfacenames:
+            _, ext = os.path.splitext(interfacename)
+            if ext != '.py': continue
+            _class = os.path.join(dirpath, interfacename)
+            file = open(_class, mode="rb")
+            _tmp = stdClass()
+            _code = file.read().decode('utf-8')
+            file.close()
+            exec(_code, _tmp)
+            _build_interface(interfaces, _dir, interfacename, _tmp)
+
+    # load config
+    framework = stdClass()
+    framework.core = core
+    framework.interfaces = interfaces
+    framework.config = config
+
+    bootstrap = bootstrap(framework).bootstrap
