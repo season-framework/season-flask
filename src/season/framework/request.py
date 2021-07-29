@@ -1,18 +1,9 @@
-import json
 import re
-import os
-
-from .core import stdClass
-from _include import loader
-
-PATH_PROJECT = loader("PATH_PROJECT", "")
-PATH_APP = os.path.join(PATH_PROJECT, 'websrc', 'app')
-PATH_WEBSRC = os.path.join(PATH_PROJECT, 'websrc')
-PATH_MODULES = os.path.join(PATH_WEBSRC, 'modules')
 
 class request:
-    def __init__(self, flask):
-        self._flask = flask
+    def __init__(self, framework):
+        self._flask = framework.flask
+        self.framework = framework
         
     def method(self):
         return self._flask.request.method

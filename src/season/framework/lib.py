@@ -1,14 +1,33 @@
-import json
-import re
 import os
 
-from .core import stdClass
+class stdClass(dict):
+    def __init__(self, *args, **kwargs):
+        super(stdClass, self).__init__(*args, **kwargs)
+        for arg in args:
+            if isinstance(arg, dict):
+                for k, v in arg.iteritems():
+                    self[k] = v
 
-from _include import loader
-PATH_PROJECT = loader("PATH_PROJECT", "")
-PATH_APP = os.path.join(PATH_PROJECT, 'websrc', 'app')
-PATH_WEBSRC = os.path.join(PATH_PROJECT, 'websrc')
-PATH_MODULES = os.path.join(PATH_WEBSRC, 'modules')
+        if kwargs:
+            for k, v in kwargs.iteritems():
+                self[k] = v
+
+    def __getattr__(self, attr):
+        return self.get(attr)
+
+    def __setattr__(self, key, value):
+        self.__setitem__(key, value)
+
+    def __setitem__(self, key, value):
+        super(stdClass, self).__setitem__(key, value)
+        self.__dict__.update({key: value})
+
+    def __delattr__(self, item):
+        self.__delitem__(item)
+
+    def __delitem__(self, key):
+        super(stdClass, self).__delitem__(key)
+        del self.__dict__[key]
 
 class lib(stdClass):
     def __init__(self, framework):
@@ -19,7 +38,7 @@ class lib(stdClass):
         if attr in self._cache:
             return self._cache[attr]
 
-        libpath = os.path.join(PATH_MODULES, self.framework._modulename,'lib', attr + '.py')
+        libpath = os.path.join(self.framework.core.PATH.MODULES, self.framework.modulename,'lib', attr + '.py')
         if os.path.isfile(libpath):
             f = open(libpath, 'r')
             _code = f.read()
@@ -31,7 +50,7 @@ class lib(stdClass):
             self._cache[attr] = obj
             return obj
 
-        libpath = os.path.join(PATH_APP, 'lib', attr + '.py')
+        libpath = os.path.join(self.framework.core.PATH.APP, 'lib', attr + '.py')
         if os.path.isfile(libpath):
             f = open(libpath, 'r')
             _code = f.read()
@@ -78,5 +97,3 @@ class core(stdClass):
 
         def to_dict(self):
             return dict(self.flask.session)
-
-            

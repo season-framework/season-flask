@@ -1,112 +1,139 @@
-inapp = True
-try:
-    from _include import loader
-except:
-    inapp = False
+# -*- coding: utf-8 -*-
 
-if inapp:
-    import os
-    import shutil
-    import datetime
+import os
+import datetime
 
-    from .framework import framework
-    from .core import stdClass
-    from .version import VERSION_STRING
-    __version__ = __VERSION__ = VERSION_STRING
+from .util.bootstrap import bootstrap
+from .util.stdclass import stdClass
 
-    PATH_PROJECT = loader("PATH_PROJECT", "")
+from .framework.request import request
+from .framework.segment import segment
+from .framework.response import response
+from .framework.lib import lib
+from .framework.status import status
 
-    PATH_WEBSRC = os.path.join(PATH_PROJECT, 'websrc')
-    PATH_FRAMEWORK = os.path.dirname(__file__)
-    PATH_MODULES = os.path.join(PATH_WEBSRC, 'modules')
+core = stdClass()
+core.PATH = stdClass()
+core.PATH.FRAMEWORK = os.path.dirname(__file__)
+core.PATH.PROJECT = os.path.join(os.getcwd())
+core.PATH.PUBLIC = os.path.join(core.PATH.PROJECT, 'public')
+core.PATH.WEBSRC = os.path.join(core.PATH.PROJECT, 'websrc')
+core.PATH.TEMPLATE = os.path.join(core.PATH.PUBLIC, 'templates')
+core.PATH.APP = os.path.join(core.PATH.WEBSRC, 'app')
+core.PATH.MODULES = os.path.join(core.PATH.WEBSRC, 'modules')
 
-    PATH_TEMPLATE = os.path.join(PATH_PROJECT, 'public', 'templates')
-    PATH_APP = os.path.join(PATH_PROJECT, 'websrc', 'app')
+core.CLASS = stdClass()
+core.CLASS.REQUEST = request
+core.CLASS.SEGMENT = segment
+core.CLASS.RESPONSE = response
+core.CLASS.LIB = lib
+core.CLASS.RESPONSE.STATUS = status
 
-    def _bootstrap():
-        # build templates
-        try:
-            shutil.rmtree(PATH_TEMPLATE)
-        except:
-            pass
+# json_default
+def json_default(value): 
+    if isinstance(value, datetime.date): 
+        return value.strftime('%Y-%m-%d %H:%M:%S') 
+    raise str(value)
 
-        try:
-            os.makedirs(PATH_TEMPLATE, exist_ok=True)
-        except:
-            pass
+core.json_default = json_default
 
-        for module in os.listdir(PATH_MODULES):
-            if module[0] == '.': continue
-            viewpath = os.path.join(PATH_WEBSRC, 'modules', module, 'view')
-            if os.path.isdir(viewpath) == False:
-                continue
-            targetpath = os.path.join(PATH_PROJECT, 'public', 'templates', module)
-
-            try:
-                os.symlink(viewpath, targetpath)
-            except:
-                pass
-
-    # add interfaces
-    interfaces = stdClass()
-
-    def _build_interface(obj, keys, instname, inst, lv=0):
-        if len(keys) == 0 and obj is not None:
-            bname = os.path.splitext(os.path.basename(instname))[0]
-            obj[bname] = inst
-            return obj
-
-        if lv >= len(keys):
-            bname = os.path.splitext(os.path.basename(instname))[0]
-            _obj = stdClass()
-            _obj[bname] = inst
-            return _obj
-
-        if obj is None: obj = stdClass()
-        key = keys[lv]
-
-        if key in obj:
-            obj[key] = _build_interface(obj[key], keys, instname, inst, lv=lv+1)
-        else: 
-            obj[key] = _build_interface(None, keys, instname, inst, lv=lv+1)
-
+# interface loader
+def _build_interface(obj, keys, instname, inst, lv=0):
+    if len(keys) == 0 and obj is not None:
+        bname = os.path.splitext(os.path.basename(instname))[0]
+        obj[bname] = inst
         return obj
 
-    interfaces_dir = os.path.join(PATH_FRAMEWORK, 'interfaces')
-    for dirpath, dirname, interfacenames in os.walk(interfaces_dir):
-        if len(interfacenames) == 0: continue
-        _dir = dirpath[len(interfaces_dir) + 1:]
-        if len(_dir) == 0:
-            _dir = []
-        else:
-            _dir = _dir.split('/')
-        
-        for interfacename in interfacenames:
-            _class = os.path.join(dirpath, interfacename)
-            with open(_class, mode="r") as file:
-                _tmp = stdClass()
+    if lv >= len(keys):
+        bname = os.path.splitext(os.path.basename(instname))[0]
+        if obj is not None: _obj = obj
+        else: _obj = stdClass()
+        _obj[bname] = inst
+        return _obj
+
+    if obj is None: obj = stdClass()
+    key = keys[lv]
+
+    if key in obj:
+        obj[key] = _build_interface(obj[key], keys, instname, inst, lv=lv+1)
+    else: 
+        obj[key] = _build_interface(None, keys, instname, inst, lv=lv+1)
+
+    return obj
+
+# load package defined interface, season.core.interfaces.*
+core.interfaces = stdClass()
+interfaces_dir = os.path.join(core.PATH.FRAMEWORK, 'framework', 'interfaces')
+for dirpath, dirname, interfacenames in os.walk(interfaces_dir):
+    
+    if len(interfacenames) == 0: continue
+    _dir = dirpath[len(interfaces_dir) + 1:]
+    if len(_dir) == 0:
+        _dir = []
+    else:
+        _dir = _dir.split('/')
+    
+    for interfacename in interfacenames:
+        _class = os.path.join(dirpath, interfacename)
+        with open(_class, mode="r") as file:
+            _tmp = stdClass()
+            _code = file.read()
+            exec(_code, _tmp)
+            _build_interface(core.interfaces, _dir, interfacename, _tmp)
+
+# load user defined interface: season.interfaces.*
+interfaces = stdClass()
+interfaces_dir = os.path.join(core.PATH.APP, 'interfaces')
+for dirpath, dirname, interfacenames in os.walk(interfaces_dir):
+    if len(interfacenames) == 0: continue
+    _dir = dirpath[len(interfaces_dir) + 1:]
+    if len(_dir) == 0:
+        _dir = []
+    else:
+        _dir = _dir.split('/')
+    
+    for interfacename in interfacenames:
+        _class = os.path.join(dirpath, interfacename)
+        with open(_class, mode="r") as file:
+            _tmp = stdClass()
+            _code = file.read()
+            exec(_code, _tmp)
+            _build_interface(interfaces, _dir, interfacename, _tmp)
+
+# load config
+class config(stdClass):
+    def __init__(self, name='config', data=stdClass()):
+        self.data = data
+        self.name = name
+
+    @classmethod
+    def load(self, name='config'):
+        c = config()
+        config_path = os.path.join(core.PATH.APP, 'config', name + '.py')
+        if os.path.isfile(config_path) == False:
+            c.data = dict()
+
+        try:
+            with open(config_path, mode="r") as file:
+                _tmp = {'config': None}
                 _code = file.read()
                 exec(_code, _tmp)
-                _build_interface(interfaces, _dir, interfacename, _tmp)
+                c.data = _tmp['config']
+        except Exception as e:
+            pass
 
-    interfaces_dir = os.path.join(PATH_APP, 'interfaces')
-    for dirpath, dirname, interfacenames in os.walk(interfaces_dir):
-        if len(interfacenames) == 0: continue
-        _dir = dirpath[len(interfaces_dir) + 1:]
-        if len(_dir) == 0:
-            _dir = []
-        else:
-            _dir = _dir.split('/')
-        
-        for interfacename in interfacenames:
-            _class = os.path.join(dirpath, interfacename)
-            with open(_class, mode="r") as file:
-                _tmp = stdClass()
-                _code = file.read()
-                exec(_code, _tmp)
-                _build_interface(interfaces, _dir, interfacename, _tmp)
+        return c
 
-    def json_default(value): 
-        if isinstance(value, datetime.date): 
-            return value.strftime('%Y-%m-%d %H:%M:%S') 
-        raise TypeError('not JSON serializable')
+    def get(self, key=None, _default=None):
+        if key is None:
+            return self.data
+        if key in self.data:
+            return self.data[key]
+        return _default
+
+framework = stdClass()
+framework.core = core
+framework.interfaces = interfaces
+framework.config = config
+
+bootstrap = bootstrap(framework).bootstrap

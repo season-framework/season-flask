@@ -1,7 +1,4 @@
-public/controller
-public/templates
-public/websrc
-public/config.py
+test/
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
