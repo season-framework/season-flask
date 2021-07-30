@@ -18,8 +18,8 @@ config.filter = [
 
 # Regist error handler
 
-# def onError(framework, code, e):
-#     framework.response.send("ERROR")
+# def onError(code, e):
+#     return flask.redirect("/"), 302
 # config.on_error = onError
 
 

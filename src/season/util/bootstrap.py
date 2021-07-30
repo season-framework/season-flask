@@ -139,8 +139,7 @@ class bootstrap:
         def handle_exception_http(e):
             if handler.onerror is not None:
                 try:
-                    season.response.set_status(e.code)
-                    return handler.onerror(season, e.code, e)
+                    return handler.onerror(e.code, e)
                 except Exception as ex:
                     if type(ex) == season.core.CLASS.RESPONSE.STATUS:
                         return handle_response(ex)
@@ -152,8 +151,7 @@ class bootstrap:
             if type(e) == season.core.CLASS.RESPONSE.STATUS: return handle_response(e)
             if handler.onerror is not None:
                 try:
-                    season.response.set_status(500)
-                    return handler.onerror(season, 500, e)
+                    return handler.onerror(500, e)
                 except Exception as ex:
                     if type(ex) == season.core.CLASS.RESPONSE.STATUS: return handle_response(ex)
             
