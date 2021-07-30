@@ -48,6 +48,10 @@ sf build --uri /home/user/project/websrc
 
 # Release Note
 
+### 0.2.2
+
+- apache wsgi bug fixed (public/app.py)
+
 ### 0.2.1
 
 - apache wsgi bug fixed
