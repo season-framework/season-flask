@@ -39,7 +39,7 @@ class bootstrap:
         self.response = None
         self.season = season
 
-    def bootstrap(self, app):
+    def bootstrap(self, app, isMain):
         HTTP_METHODS = ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'CONNECT', 'OPTIONS', 'TRACE', 'PATCH']
         season = self.season
         season.core.build.template()
@@ -380,6 +380,9 @@ class bootstrap:
 
         if handler.build is not None:
             handler.build(app)
+        
+        if isMain:
+            _logger(LOG_DEV, message=f"running on http://{host}:{port}/ (Press CTRL+C to quit)")
+            app.run(host=host, port=port)
 
-        _logger(LOG_DEV, message=f"running on http://{host}:{port}/ (Press CTRL+C to quit)")
-        app.run(host=host, port=port)
+        return app

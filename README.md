@@ -48,6 +48,10 @@ sf build --uri /home/user/project/websrc
 
 # Release Note
 
+### 0.2.1
+
+- apache wsgi bug fixed
+
 ### 0.2.0
 
 - framework structure upgraded
