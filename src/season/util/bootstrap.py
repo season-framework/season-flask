@@ -105,6 +105,9 @@ class bootstrap:
             
             print_res = f"{_prefix_color}{_prefix}[{timestamp}]"
             if level == LOG_DEV:
+                print_res = f"{_prefix_color}{_prefix}"
+                if ERROR_INFO is not None:
+                    print_res = print_res + f"[{ERROR_INFO.controllerpath[len(season.core.PATH.PROJECT)+1:]}]"
                 if starttime is not None:
                     print_res = print_res + f"[{starttime}ms]"
                 print_res = print_res + "\033[0m " + message
@@ -115,12 +118,10 @@ class bootstrap:
                 print_res = print_res + "\033[0m " + ERROR_INFO.path
 
             print_res = [print_res]
+            if level >= LOG_ERROR:
+                print_res.append(f"{_prefix_color}[TRACEBACK][SRCPATH]\033[0m " + ERROR_INFO.controllerpath)
             if message is not None and level != LOG_DEV: 
                 print_res.append(f"[TRACEBACK][MESSAGE] " + message)
-            
-            if level >= LOG_ERROR:
-                print_res.append(f"[TRACEBACK][MODULEPATH] " + ERROR_INFO.modulepath)
-                print_res.append(f"[TRACEBACK][CTRLPATH] " + ERROR_INFO.controllerpath)
             if level == LOG_ERROR: 
                 print_res.append(traceback.format_exc())
             print_res = "\n".join(print_res).strip()
@@ -340,7 +341,9 @@ class bootstrap:
                     filter_path = os.path.join(season.core.PATH.WEBSRC, 'app', 'filter', _filter + '.py')
                     if os.path.isfile(filter_path) == False:
                         continue
-                        
+                    
+                    ERROR_INFO.controllerpath = filter_path
+
                     file = open(filter_path, mode="rb")
                     _tmp = {'process': None}
                     _code = file.read().decode('utf-8')
@@ -350,8 +353,9 @@ class bootstrap:
                     res = filter_fn(framework)
                     if res is not None:
                         return res
-                    
+                
                 # process controller
+                ERROR_INFO.controllerpath = controller_path
                 if os.path.isfile(controller_path) == False:
                     flask.abort(404)
 
