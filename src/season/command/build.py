@@ -19,16 +19,16 @@ def copytree(src, dst, symlinks=False, ignore=None):
             shutil.copy2(s, d)
 
 def clear_websrc():
+    print("clear exist websrc...")
     try:
         shutil.rmtree(PATH_WEBSRC)
-        print("clear exist websrc...")
     except:
         pass
 
 def clear_tmp():
+    print("clear tmp directory...")
     try:
         shutil.rmtree(PATH_TMP)
-        print("clear tmp directory...")
     except:
         pass
 
@@ -99,12 +99,10 @@ def build(uri=None):
                 print("this git repository is not structed for websrc.")
 
     # build
-    
-
+    # TODO: add build process using websrc build folder
 
     # finish task
     clear_tmp()
-
     timeinterval = round(time.time()*1000) - timeinterval
     timeinterval = round(timeinterval / 1000)
     print(f"finish to build in {timeinterval}s. run season framework using `sf run`")

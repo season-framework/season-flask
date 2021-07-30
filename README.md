@@ -1,4 +1,4 @@
-## Installation
+# Installation
 
 ```bash
 pip install git+https://github.com/season-framework/season-flask
@@ -6,37 +6,52 @@ pip install git+https://github.com/season-framework/season-flask
 pip install season
 ```
 
-## Usage
+# Usage
+
+## Getting Started
 
 - create project
 
 ```bash
 cd <workspace>
-sf create your-project-name
+sf create myapp
+cd myapp
 ```
 
 - create your websrc
 
 ```bash
-cd <your-project-path>
-sf add module dashboard
-sf add module theme --uri https://git.season.co.kr/season-flask/module-theme-tabler # theme for tabler ui
-sf add filter testfilter
-sf add model testset
+sf module remove theme
+sf module import theme --uri https://git.season.co.kr/season-flask/theme
 ```
 
-- add repo
+- start development mode
 
 ```bash
-cd <your-project-path>
-sf config --set repo --value https://git.season.co.kr/season-flask # git repo project root uri of your system
-sf add module something  # git from https://git.season.co.kr/season-flask/something, if not exists build default
-sf config --unset repo
-```
-
-- start
-
-```bash
-cd <your-project-path>
 sf run
 ```
+
+## Import Exists Project from websrc
+
+- import from git repo
+
+```bash
+sf build --uri https://git.season.co.kr/outsourcing/nice-kyg-websrc
+```
+
+- import from directory
+
+```bash
+sf build --uri /home/user/project/websrc
+```
+
+
+# Release Note
+
+### 0.2.0
+
+- framework structure upgraded
+- command line tool function changed
+- submodule structure added
+- logging 
+- simplify public directory structure

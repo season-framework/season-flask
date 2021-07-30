@@ -3,12 +3,14 @@ import flask
 import os
 import lesscpy
 from six import StringIO
-from season import stdClass
+import season
 
-config = stdClass()
+config = season.stdClass()
 
 config.host = "0.0.0.0"
 config.port = 3000
+
+config.log_level = season.LOG_INFO
 
 config.filter = [
     'indexfilter'
@@ -20,11 +22,13 @@ config.filter = [
 #     framework.response.send("ERROR")
 # config.on_error = onError
 
+
 # process before request
 
 # def beforeRequest(framework):
 #     pass
 # config.before_request = beforeRequest
+
 
 # process after request, like add http header
 
@@ -32,12 +36,11 @@ config.filter = [
 #     return response
 # config.after_request = afterRequest
 
+
 # additional build app
 def build(app):
     app.secret_key = "session-secret"
-    log = logging.getLogger('werkzeug')
-    log.disabled = True
-
+    
 config.build = build
 
 # regist resource handler

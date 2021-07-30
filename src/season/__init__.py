@@ -11,6 +11,13 @@ from .framework.response import response
 from .framework.lib import lib
 from .framework.status import status
 
+LOG_DEBUG = 0
+LOG_INFO = 1
+LOG_DEV = 2
+LOG_WARNING = 3
+LOG_ERROR = 4
+LOG_CRITICAL = 5
+
 core = stdClass()
 core.PATH = stdClass()
 core.PATH.FRAMEWORK = os.path.dirname(__file__)

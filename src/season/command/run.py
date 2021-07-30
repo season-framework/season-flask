@@ -1,6 +1,5 @@
 import time
 import os
-import datetime
 import subprocess
 import psutil
 import multiprocessing as mp
@@ -43,24 +42,24 @@ def run():
         CACHE['lasttime'] = time.time() * 1000
 
         while True:
-            nd = datetime.datetime.now()
             now = time.time() * 1000
             diff = now - CACHE['lasttime']
             if CACHE['refresh'] and diff > 500:
-                print('\n\nrestarted at {}'.format(nd))
                 try:
                     for child in psutil.Process(proc.pid).children(recursive=True):
                         child.kill()
-                except Exception as e:
+                except:
                     pass
                 try:
                     proc = mp.Process(target=run_ctrl)
                     proc.start()
-                except Exception as e:
+                except:
                     pass
                 CACHE['refresh'] = False
-                
+
             time.sleep(1)
+    except:
+        pass
     finally:
         observer.stop()
         observer.join()
