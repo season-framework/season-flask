@@ -35,8 +35,13 @@ class stdClass(dict):
         super(stdClass, self).__delitem__(key)
         del self.__dict__[key]
 
-class FileSystem:
+class base:
     def __init__(self, framework):
+        self.framework = framework
+        
+class FileSystem(base):
+    def __init__(self, framework):
+        super().__init__(framework)
         self.framework = framework
         self.config = framework.config.load('storage')
         self.namespace = ""
@@ -176,8 +181,9 @@ def join(v, format='/'):
         return ''
     return format.join(v)
 
-class MySQL:
+class MySQL(base):
     def __init__(self, framework):
+        super().__init__(framework)
         self.framework = framework
         self.config = framework.config.load('database')
         self.namespace = None

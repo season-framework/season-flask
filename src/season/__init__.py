@@ -153,9 +153,10 @@ if os.path.isdir(core.PATH.WEBSRC):
             _class = os.path.join(dirpath, interfacename)
             file = open(_class, mode="rb")
             _tmp = stdClass()
+            _tmp['__file__'] = _class
             _code = file.read().decode('utf-8')
             file.close()
-            exec(_code, _tmp)
+            exec(compile(_code, _class, 'exec'), _tmp)
             _build_interface(core.interfaces, _dir, interfacename, _tmp)
 
     # load user defined interface: season.interfaces.*
@@ -174,9 +175,10 @@ if os.path.isdir(core.PATH.WEBSRC):
             _class = os.path.join(dirpath, interfacename)
             file = open(_class, mode="rb")
             _tmp = stdClass()
+            _tmp['__file__'] = _class
             _code = file.read().decode('utf-8')
             file.close()
-            exec(_code, _tmp)
+            exec(compile(_code, _class, 'exec'), _tmp)
             _build_interface(interfaces, _dir, interfacename, _tmp)
 
     # load config

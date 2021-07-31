@@ -2,6 +2,7 @@ import logging
 import os
 import time
 import traceback
+import inspect
 import flask
 from werkzeug.exceptions import HTTPException
 
@@ -84,12 +85,12 @@ class bootstrap:
             _prefix = ""
             _prefix_color = ""
             timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.gmtime())
-            if level == LOG_INFO: 
-                _prefix_color = "\033[94m"
-                _prefix = "[INFO_]"
             if level == LOG_DEBUG: 
                 _prefix_color = "\033[94m"
                 _prefix = "[DEBUG]"
+            if level == LOG_INFO: 
+                _prefix_color = "\033[94m"
+                _prefix = "[INFO_]"
             if level == LOG_DEV: 
                 _prefix_color = "\033[93m"
                 _prefix = "[DEV__]"
@@ -102,12 +103,21 @@ class bootstrap:
             if level == LOG_CRITICAL: 
                 _prefix_color = "\033[91m"
                 _prefix = "[CRITI]"
+
+            sourcefile = "undefined"
+            for stack in inspect.stack():
+                try:
+                    if stack.filename[:len(season.core.PATH.PROJECT)] == season.core.PATH.PROJECT:
+                        sourcefile = stack.filename[len(season.core.PATH.PROJECT)+1:]
+                        break
+                except:
+                    pass
             
             print_res = f"{_prefix_color}{_prefix}[{timestamp}]"
             if level == LOG_DEV:
                 print_res = f"{_prefix_color}{_prefix}"
                 if ERROR_INFO is not None:
-                    print_res = print_res + f"[{ERROR_INFO.controllerpath[len(season.core.PATH.PROJECT)+1:]}]"
+                    print_res = print_res + f"[{sourcefile}]"
                 if starttime is not None:
                     print_res = print_res + f"[{starttime}ms]"
                 print_res = print_res + "\033[0m " + message
@@ -119,7 +129,7 @@ class bootstrap:
 
             print_res = [print_res]
             if level >= LOG_ERROR:
-                print_res.append(f"{_prefix_color}[TRACEBACK][SRCPATH]\033[0m " + ERROR_INFO.controllerpath)
+                print_res.append(f"{_prefix_color}[TRACEBACK][SRCPATH]\033[0m " + sourcefile)
             if message is not None and level != LOG_DEV: 
                 print_res.append(f"[TRACEBACK][MESSAGE] " + message)
             if level == LOG_ERROR: 
@@ -302,9 +312,9 @@ class bootstrap:
                         framework.response.error(500, 'Model Not Found')
 
                     with open(model_path, mode="rb") as file:
-                        _tmp = {'Model': None}
                         _code = file.read().decode('utf-8')
-                        exec(_code, _tmp)
+                        _tmp = {'__file__': model_path}
+                        exec(compile(_code, model_path, 'exec'), _tmp)
                         framework._cache.model[model_path] = _tmp['Model'](framework)
                         return framework._cache.model[model_path]
 
@@ -318,10 +328,10 @@ class bootstrap:
                 fnname = segment_path.split('/')[0]
                 if os.path.isfile(controller_path):
                     file = open(controller_path, mode="rb")
-                    _tmp = {'Controller': None}
                     ctrlcode = file.read().decode('utf-8')
                     file.close()
-                    exec(ctrlcode, _tmp)
+                    _tmp = {'__file__': controller_path}
+                    exec(compile(ctrlcode, controller_path, 'exec'), _tmp)
                     try:
                         controller = _tmp['Controller'](framework)
                     except:
@@ -345,10 +355,10 @@ class bootstrap:
                     ERROR_INFO.controllerpath = filter_path
 
                     file = open(filter_path, mode="rb")
-                    _tmp = {'process': None}
                     _code = file.read().decode('utf-8')
                     file.close()
-                    exec(_code, _tmp)
+                    _tmp = {'__file__': filter_path}
+                    exec(compile(_code, filter_path, 'exec'), _tmp)
                     filter_fn = _tmp['process']
                     res = filter_fn(framework)
                     if res is not None:
