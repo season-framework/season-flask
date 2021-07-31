@@ -48,6 +48,10 @@ sf build --uri /home/user/project/websrc
 
 # Release Note
 
+### 0.2.6
+
+- logger upgrade (file trace bug fixed)
+
 ### 0.2.5
 
 - logger upgrade (log executed file trace)

@@ -104,7 +104,7 @@ class bootstrap:
                 _prefix_color = "\033[91m"
                 _prefix = "[CRITI]"
 
-            sourcefile = "undefined"
+            sourcefile = "unknown"
             for stack in inspect.stack():
                 try:
                     if stack.filename[:len(season.core.PATH.PROJECT)] == season.core.PATH.PROJECT:
@@ -112,7 +112,9 @@ class bootstrap:
                         break
                 except:
                     pass
-            
+            if sourcefile == 'unknown' and ERROR_INFO.controllerpath != 'unknown':
+                sourcefile = ERROR_INFO.controllerpath
+                
             print_res = f"{_prefix_color}{_prefix}[{timestamp}]"
             if level == LOG_DEV:
                 print_res = f"{_prefix_color}{_prefix}"
