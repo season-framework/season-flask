@@ -24,6 +24,8 @@ class response:
         
     # response functions
     def redirect(self, url):
+        if url.startswith('http') == False:
+            url = os.path.abspath(os.path.join("/" + self.modulename, url))
         self.status_code = 302
         resp = self._flask.redirect(url)
         return self._build(resp)
