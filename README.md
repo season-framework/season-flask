@@ -36,7 +36,7 @@ sf run
 - import from git repo
 
 ```bash
-sf build --uri https://git.season.co.kr/outsourcing/nice-kyg-websrc
+sf build --uri https://github.com/season-framework/something
 ```
 
 - import from directory
