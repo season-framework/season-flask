@@ -48,9 +48,13 @@ sf build --uri /home/user/project/websrc
 
 # Release Note
 
-### 0.2.6
+### 0.2.8
 
-- logger upgrade (file trace bug fixed)
+- error handler in controller `__error__`
+
+### 0.2.7
+
+- response redirect update (relative module path)
 
 ### 0.2.5
 
