@@ -56,6 +56,10 @@ sf build --uri /home/user/project/websrc
 
 - response redirect update (relative module path)
 
+### 0.2.6
+
+- logger upgrade (file trace bug fixed)
+
 ### 0.2.5
 
 - logger upgrade (log executed file trace)
