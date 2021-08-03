@@ -18,6 +18,9 @@ class response:
     def set_mimetype(self, mimetype):
         self.mimetype = mimetype
 
+    def abort(self, code=500):
+        flask.abort(code)
+
     def error(self, code=404, response="ERROR"):
         event = self.framework.core.CLASS.RESPONSE.STATUS(code=code, response=response)
         raise event

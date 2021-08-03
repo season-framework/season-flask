@@ -48,6 +48,10 @@ sf build --uri /home/user/project/websrc
 
 # Release Note
 
+### 0.2.9
+
+- add response.abort
+
 ### 0.2.8
 
 - error handler in controller `__error__`
