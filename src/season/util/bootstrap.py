@@ -150,24 +150,10 @@ class bootstrap:
         # Exception Handler 
         @app.errorhandler(HTTPException)
         def handle_exception_http(e):
-            if handler.onerror is not None:
-                try:
-                    return handler.onerror(e.code, e)
-                except Exception as ex:
-                    if type(ex) == season.core.CLASS.RESPONSE.STATUS:
-                        return handle_response(ex)
-                    raise ex
             return e.get_response()
 
         @app.errorhandler(Exception)
         def handle_exception(e):
-            if type(e) == season.core.CLASS.RESPONSE.STATUS: return handle_response(e)
-            if handler.onerror is not None:
-                try:
-                    return handler.onerror(500, e)
-                except Exception as ex:
-                    if type(ex) == season.core.CLASS.RESPONSE.STATUS: return handle_response(ex)
-            
             return '<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 3.2 Final//EN"><title>500 Internal Server Error</title><h1>Internal Server Error</h1><p>The server encountered an internal error and was unable to complete your request. Either the server is overloaded or there is an error in the application.</p>', 500
 
         # Before Request
@@ -390,7 +376,7 @@ class bootstrap:
             except HTTPException as e:
                 try:
                     if hasattr(controller, '__error__'):
-                        res = getattr(controller, '__error__')(framework, e)
+                        getattr(controller, '__error__')(framework, e)
                 except season.core.CLASS.RESPONSE.STATUS as e2:
                     raise e2
                 except HTTPException as e2:
@@ -399,13 +385,26 @@ class bootstrap:
                 except Exception as e2:
                     _logger(LOG_ERROR, ERROR_INFO=ERROR_INFO, code=500, starttime=starttime)
                     raise e2
+
+                try:
+                    if handler.onerror is not None:
+                        handler.onerror(framework, e)
+                except season.core.CLASS.RESPONSE.STATUS as e2:
+                    raise e2
+                except HTTPException as e2:
+                    _logger(LOG_WARNING, ERROR_INFO=ERROR_INFO, code=e2.code, starttime=starttime)
+                    raise e2
+                except Exception as e2:
+                    _logger(LOG_ERROR, ERROR_INFO=ERROR_INFO, code=500, starttime=starttime)
+                    raise e2
+
                 _logger(LOG_WARNING, ERROR_INFO=ERROR_INFO, code=e.code, starttime=starttime)
                 raise e
 
             except Exception as e:
                 try:
                     if hasattr(controller, '__error__'):
-                        res = getattr(controller, '__error__')(framework, e)
+                        getattr(controller, '__error__')(framework, e)
                 except season.core.CLASS.RESPONSE.STATUS as e2:
                     raise e2
                 except HTTPException as e2:
@@ -414,6 +413,19 @@ class bootstrap:
                 except Exception as e2:
                     _logger(LOG_ERROR, ERROR_INFO=ERROR_INFO, code=500, starttime=starttime)
                     raise e2
+                
+                try:
+                    if handler.onerror is not None:
+                        handler.onerror(framework, e)
+                except season.core.CLASS.RESPONSE.STATUS as e2:
+                    raise e2
+                except HTTPException as e2:
+                    _logger(LOG_WARNING, ERROR_INFO=ERROR_INFO, code=e2.code, starttime=starttime)
+                    raise e2
+                except Exception as e2:
+                    _logger(LOG_ERROR, ERROR_INFO=ERROR_INFO, code=500, starttime=starttime)
+                    raise e2
+
                 _logger(LOG_ERROR, ERROR_INFO=ERROR_INFO, code=500, starttime=starttime)
                 raise e
 

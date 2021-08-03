@@ -48,6 +48,10 @@ sf build --uri /home/user/project/websrc
 
 # Release Note
 
+### 0.2.10
+
+- config onerror changed 
+
 ### 0.2.9
 
 - add response.abort
