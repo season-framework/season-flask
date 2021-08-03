@@ -382,13 +382,38 @@ class bootstrap:
                         return getattr(controller, fnname)(framework)
                         
                 flask.abort(404)
+
             except season.core.CLASS.RESPONSE.STATUS as e:
                 _logger(LOG_INFO, ERROR_INFO=ERROR_INFO, starttime=starttime)
                 raise e
+
             except HTTPException as e:
+                try:
+                    if hasattr(controller, '__error__'):
+                        res = getattr(controller, '__error__')(framework, e)
+                except season.core.CLASS.RESPONSE.STATUS as e2:
+                    raise e2
+                except HTTPException as e2:
+                    _logger(LOG_WARNING, ERROR_INFO=ERROR_INFO, code=e2.code, starttime=starttime)
+                    raise e2
+                except Exception as e2:
+                    _logger(LOG_ERROR, ERROR_INFO=ERROR_INFO, code=500, starttime=starttime)
+                    raise e2
                 _logger(LOG_WARNING, ERROR_INFO=ERROR_INFO, code=e.code, starttime=starttime)
                 raise e
+
             except Exception as e:
+                try:
+                    if hasattr(controller, '__error__'):
+                        res = getattr(controller, '__error__')(framework, e)
+                except season.core.CLASS.RESPONSE.STATUS as e2:
+                    raise e2
+                except HTTPException as e2:
+                    _logger(LOG_WARNING, ERROR_INFO=ERROR_INFO, code=e2.code, starttime=starttime)
+                    raise e2
+                except Exception as e2:
+                    _logger(LOG_ERROR, ERROR_INFO=ERROR_INFO, code=500, starttime=starttime)
+                    raise e2
                 _logger(LOG_ERROR, ERROR_INFO=ERROR_INFO, code=500, starttime=starttime)
                 raise e
 
