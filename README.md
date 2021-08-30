@@ -48,6 +48,11 @@ sf build --uri /home/user/project/websrc
 
 # Release Note
 
+### 0.2.11
+
+- interface loader update
+
+
 ### 0.2.10
 
 - config onerror changed 
