@@ -119,24 +119,44 @@ class _interfaces(dict):
 
     def __getattr__(self, attr):
         NAMESPACE = ".".join([self.__NAMESPACE__, attr])
-        FILEPATH = os.path.join(core.PATH.APP, "/".join(NAMESPACE.split(".")[:-1])) + ".py"
         FUNCNAME = NAMESPACE.split(".")[-1]
 
-        if os.path.isfile(FILEPATH):
-            file = open(FILEPATH, mode="rb")
-            _tmp = stdClass()
-            _tmp['__file__'] = FILEPATH
-            _code = file.read().decode('utf-8')
-            file.close()
-            exec(compile(_code, FILEPATH, 'exec'), _tmp)
+        def load_interface(FILEPATH):
+            if os.path.isfile(FILEPATH):
+                file = open(FILEPATH, mode="rb")
+                _tmp = stdClass()
+                _tmp['__file__'] = FILEPATH
+                _code = file.read().decode('utf-8')
+                file.close()
+                exec(compile(_code, FILEPATH, 'exec'), _tmp)
+                if FUNCNAME in _tmp:
+                    return _tmp[FUNCNAME]
+            return None
 
-            if FUNCNAME in _tmp:
-                return _tmp[FUNCNAME]
+        # module interfaces
+        path = NAMESPACE.split(".")[:-1]
+        path = path[1:]
+        for i in range(len(path)):
+            idx = len(path) - i
+            module = "/".join(path[:idx])
+            module_path = os.path.join(core.PATH.MODULES, module)
+            interface_path = "/".join(path[idx:]) + ".py"
+            FILEPATH = os.path.join(module_path, "interfaces", interface_path)
+            interface = load_interface(FILEPATH)
+            if interface is not None: 
+                return interface
+
+        # global interfaces
+        FILEPATH = os.path.join(core.PATH.APP, "/".join(NAMESPACE.split(".")[:-1])) + ".py"
+        interface = load_interface(FILEPATH)
+        if interface is not None: 
+            return interface
     
         return _interfaces(NAMESPACE)
 
 interfaces = _interfaces()
 
+# core interfaces
 class _interfacesc(dict):
     def __init__(self, namespace="interfaces"):
         super(_interfacesc, self).__init__()

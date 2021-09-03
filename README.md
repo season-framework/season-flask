@@ -48,6 +48,10 @@ sf build --uri /home/user/project/websrc
 
 # Release Note
 
+### 0.2.12
+
+- add variable expression change option
+
 ### 0.2.11
 
 - interface loader update

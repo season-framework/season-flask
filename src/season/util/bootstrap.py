@@ -139,6 +139,8 @@ class bootstrap:
             print_res = "\n".join(print_res).strip()
             print(print_res)
                 
+        app.jinja_env.variable_start_string = config.get("jinja_variable_start_string", "{{")
+        app.jinja_env.variable_end_string = config.get("jinja_variable_end_string", "}}")
         app.jinja_env.add_extension('pypugjs.ext.jinja.PyPugJSExtension')
         
         # response handler
