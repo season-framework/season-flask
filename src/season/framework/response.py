@@ -55,7 +55,7 @@ class response:
         self.headers.set('Content-Type', 'application/json')
         return self._build(resp)
 
-    def render(self, template_uri, module=None, **args):
+    def template(self, template_uri, module=None, **args):
         if module is None: module = self.modulename
         TEMPLATE_PATH = os.path.join(self.framework.core.PATH.TEMPLATE, module, template_uri)
         TEMPLATE_URI = os.path.join(module, template_uri)
@@ -63,8 +63,13 @@ class response:
         if os.path.isfile(TEMPLATE_PATH):
             data = self.data.get()
             resp = self._flask.render_template(TEMPLATE_URI, **data)
-            return self.send(resp, "text/html")
+            return resp
+        return None
 
+    def render(self, template_uri, module=None, **args):
+        resp = self.template(template_uri, module=module, **args)
+        if resp is not None:
+            return self.send(resp, "text/html")
         flask.abort(404)
 
     # template varialbes
