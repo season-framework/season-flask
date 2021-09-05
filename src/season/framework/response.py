@@ -55,6 +55,12 @@ class response:
         self.headers.set('Content-Type', 'application/json')
         return self._build(resp)
 
+    def template_from_string(self, template_string, **kwargs):
+        self.data.set(**kwargs)
+        data = self.data.get()
+        html = self._flask.render_template_string(template_string, **data)
+        return html
+
     def template(self, template_uri, module=None, **args):
         if module is None: module = self.modulename
         TEMPLATE_PATH = os.path.join(self.framework.core.PATH.TEMPLATE, module, template_uri)

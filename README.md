@@ -48,6 +48,10 @@ sf build --uri /home/user/project/websrc
 
 # Release Note
 
+### 0.2.14
+
+- add response.template_from_string function
+
 ### 0.2.13
 
 - add response.template function
