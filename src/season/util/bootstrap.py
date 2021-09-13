@@ -193,7 +193,7 @@ class bootstrap:
                         if handler.build_resource is not None:
                             res = handler.build_resource(resource_dirpath, resource_filepath)
                             if res is not None: return res
-                        _logger(LOG_INFO, ERROR_INFO=ERROR_INFO, starttime=starttime)
+                        _logger(LOG_DEBUG, ERROR_INFO=ERROR_INFO, starttime=starttime)
                         return flask.send_from_directory(resource_dirpath, resource_filepath)
                 
                 # global resource
@@ -204,12 +204,12 @@ class bootstrap:
                     if handler.build_resource is not None:
                         res = handler.build_resource(resource_dirpath, resource_filepath)
                         if res is not None: return res
-                    _logger(LOG_INFO, ERROR_INFO=ERROR_INFO, starttime=starttime)
+                    _logger(LOG_DEBUG, ERROR_INFO=ERROR_INFO, starttime=starttime)
                     return flask.send_from_directory(resource_dirpath, resource_filepath)
 
                 flask.abort(404)
             except season.core.CLASS.RESPONSE.STATUS as e:
-                _logger(LOG_INFO, ERROR_INFO=ERROR_INFO, starttime=starttime)
+                _logger(LOG_DEBUG, ERROR_INFO=ERROR_INFO, starttime=starttime)
                 raise e
             except HTTPException as e:
                 _logger(LOG_WARNING, ERROR_INFO=ERROR_INFO, code=e.code, starttime=starttime)
