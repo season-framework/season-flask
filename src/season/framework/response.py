@@ -8,9 +8,18 @@ class response:
         self._flask = framework.flask
         self.data = response._data(framework)
         self.headers = self._headers()
+        self.cookies = self._cookies()
         self.status_code = None
         self.mimetype = None
         self.modulename = framework.modulename
+
+    def lang(self, lang):
+        self.language(lang)
+
+    def language(self, lang):
+        lang = lang[:2].upper()
+        self.framework.__language__ = lang
+        self.cookies.set('framework-language', lang)
 
     def set_status(self, status_code):
         self.status_code = status_code
@@ -116,11 +125,31 @@ class response:
         def flush(self):
             self.headers = {}
 
+    class _cookies:
+        def __init__(self):
+            self.cookies = {}
+        
+        def get(self):
+            return self.cookies
+
+        def set(self, key, value):
+            self.cookies[key] = value
+
+        def load(self, cookies):
+            self.cookies = cookies
+
+        def flush(self):
+            self.cookies = {}
+
     # build response function
     def _build(self, response):
         headers = self.headers.get()
         for key in headers:
             response.headers[key] = headers[key]
+
+        cookies = self.cookies.get()
+        for key in cookies:
+            response.set_cookie(key, cookies[key])
         
         if self.status_code is not None:
             response.status_code = self.status_code

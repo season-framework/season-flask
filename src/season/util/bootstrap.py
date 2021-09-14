@@ -11,12 +11,18 @@ class stdClass(dict):
         super(stdClass, self).__init__(*args, **kwargs)
         for arg in args:
             if isinstance(arg, dict):
-                for k, v in arg.iteritems():
-                    self[k] = v
+                for k, v in arg.items():
+                    if isinstance(v, dict):
+                        self[k] = stdClass(v)
+                    else:
+                        self[k] = v
 
         if kwargs:
-            for k, v in kwargs.iteritems():
-                self[k] = v
+            for k, v in kwargs.items():
+                if isinstance(v, dict):
+                    self[k] = stdClass(v)
+                else:
+                    self[k] = v
 
     def __getattr__(self, attr):
         return self.get(attr)
@@ -277,8 +283,11 @@ class bootstrap:
                 framework.request.segment = season.core.CLASS.SEGMENT(framework)
                 framework.response = season.core.CLASS.RESPONSE(framework)
                 framework.lib = season.core.CLASS.LIB(framework)
-                
-                framework.response.data.set(module=module)
+
+                framework.dic = season.dic
+                framework.dic.set_language(framework.request.language())
+
+                framework.response.data.set(module=module, dic=framework.dic)
 
                 def log(*args):
                     _logger(LOG_DEV, ERROR_INFO=ERROR_INFO, code=200, message=" ".join(map(str, args)))

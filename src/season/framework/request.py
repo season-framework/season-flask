@@ -12,14 +12,21 @@ class request:
         return self._flask.request.environ.get('HTTP_X_REAL_IP', self._flask.request.remote_addr)
 
     def language(self):
-        headers = dict(self._flask.request.headers)
-        lang = None
-        if 'Framework-Language' in headers:
-            lang = headers['Framework-Language']
-        elif 'Accept-Language' in headers:
-            lang = headers['Accept-Language']
-            lang = lang[:2]
-        return lang
+        try:
+            if '__language__' in self.framework and self.framework.__language__ is not None:
+                return self.framework.__language__
+            
+            lang = "DEFAULT"
+            cookies = dict(self._flask.request.cookies)
+            headers = dict(self._flask.request.headers)
+            if 'framework-language' in cookies:
+                lang = cookies['framework-language']
+            elif 'Accept-Language' in headers:
+                lang = headers['Accept-Language']
+                lang = lang[:2]
+            return lang.upper()
+        except:
+            return "DEFAULT"
 
     def uri(self):
         return self.request().path
@@ -49,6 +56,12 @@ class request:
         headers = dict(self._flask.request.headers)
         if key in headers:
             return headers[key]
+        return default
+
+    def cookies(self, key, default=None):
+        cookies = dict(self._flask.request.cookies)
+        if key in cookies:
+            return cookies[key]
         return default
 
     def file(self):

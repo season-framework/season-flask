@@ -3,12 +3,18 @@ class stdClass(dict):
         super(stdClass, self).__init__(*args, **kwargs)
         for arg in args:
             if isinstance(arg, dict):
-                for k, v in arg.iteritems():
-                    self[k] = v
+                for k, v in arg.items():
+                    if isinstance(v, dict):
+                        self[k] = stdClass(v)
+                    else:
+                        self[k] = v
 
         if kwargs:
-            for k, v in kwargs.iteritems():
-                self[k] = v
+            for k, v in kwargs.items():
+                if isinstance(v, dict):
+                    self[k] = stdClass(v)
+                else:
+                    self[k] = v
 
     def __getattr__(self, attr):
         return self.get(attr)

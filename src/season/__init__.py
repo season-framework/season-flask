@@ -1,6 +1,7 @@
 import os
 import datetime
 import shutil
+import json
 
 from .util.bootstrap import bootstrap
 from .util.stdclass import stdClass
@@ -117,6 +118,9 @@ class _interfaces(dict):
         super(_interfaces, self).__init__()
         self.__NAMESPACE__ = namespace
 
+    def __getitem__(self, key):
+        return self.__getattr__(key)
+
     def __getattr__(self, attr):
         NAMESPACE = ".".join([self.__NAMESPACE__, attr])
         FUNCNAME = NAMESPACE.split(".")[-1]
@@ -162,6 +166,9 @@ class _interfacesc(dict):
         super(_interfacesc, self).__init__()
         self.__NAMESPACE__ = namespace
 
+    def __getitem__(self, key):
+        return self.__getattr__(key)
+
     def __getattr__(self, attr):
         NAMESPACE = ".".join([self.__NAMESPACE__, attr])
         FILEPATH = os.path.join(core.PATH.FRAMEWORK, 'framework', "/".join(NAMESPACE.split(".")[:-1])) + ".py"
@@ -182,10 +189,181 @@ class _interfacesc(dict):
 
 core.interfaces = _interfacesc()
 
+# dictionary
+class dicObjClass(dict):
+    def __init__(self, *args, **kwargs):
+        super(dicObjClass, self).__init__(*args, **kwargs)
+        for arg in args:
+            if isinstance(arg, dict):
+                for k, v in arg.items():
+                    if isinstance(v, dict):
+                        self[k] = dicObjClass(v)
+                    else:
+                        self[k] = v
+
+        if kwargs:
+            for k, v in kwargs.items():
+                if isinstance(v, dict):
+                    self[k] = dicObjClass(v)
+                else:
+                    self[k] = v
+
+    def __getattr__(self, attr):
+        return self.get(attr)
+
+    def __setattr__(self, key, value):
+        self.__setitem__(key, value)
+
+    def __setitem__(self, key, value):
+        super(dicObjClass, self).__setitem__(key, value)
+        self.__dict__.update({key: value})
+
+    def __delattr__(self, item):
+        self.__delitem__(item)
+
+    def __delitem__(self, key):
+        super(dicObjClass, self).__delitem__(key)
+        del self.__dict__[key]
+
+def __finddic__():
+    mydict = stdClass()
+    dicdir = os.path.join(core.PATH.APP, "dic")
+    dicfile = os.path.join(dicdir, "default.json")
+
+    # global dic
+    if os.path.isfile(dicfile):
+        try:
+            filenames = os.listdir(dicdir)
+            for filename in filenames:
+                langname, ext = os.path.splitext(filename)
+                if ext != ".json":
+                    continue
+                dicfile = os.path.join(dicdir, filename)
+                if "__global__" not in mydict:
+                    mydict.__global__ = dicObjClass()
+                with open(dicfile) as data:
+                    data = json.load(data)
+                    data = stdClass(data)
+                    mydict.__global__[langname.upper()] = data
+        except: 
+            pass
+
+    # module dic
+    for root, _, _ in os.walk(core.PATH.MODULES):
+        dicdir = os.path.join(root, "dic")
+        dicfile = os.path.join(dicdir, "default.json")
+
+        if os.path.isfile(dicfile) == False:
+            continue
+        
+        root = root.replace(core.PATH.MODULES + "/", "")
+        ns = root.split('/')
+        try:
+            filenames = os.listdir(dicdir)
+            for filename in filenames:
+                langname, ext = os.path.splitext(filename)
+                if ext != ".json":
+                    continue
+                dicfile = os.path.join(dicdir, filename)
+                with open(dicfile) as data:
+                    data = json.load(data)
+                    data = stdClass(data)
+                    tmp = mydict
+                    for i in range(len(ns)):
+                        n = ns[i]
+                        if n not in tmp:
+                            tmp[n] = dicObjClass()
+                        if i == len(ns) - 1:    
+                            tmp[n][langname.upper()] = data
+                        tmp = tmp[n]
+        except: 
+            pass
+
+    return mydict
+
+class dicClass(dict):
+    def __init__(self, root, obj=None, lang="DEFAULT", default_dic=None, default_dic_loc=[]):
+        super(dicClass, self).__init__()
+        self.obj = obj
+        self.root = root
+        self.lang = lang.upper()
+        self.default_dic = default_dic
+        self.default_dic_loc = default_dic_loc
+
+    def set_language(self, lang):
+        self.lang = lang.upper()
+
+    def __getitem__(self, key):
+        return self.__getattr__(key)
+
+    def __getattr__(self, attr):
+        try:
+            self.default_dic_loc.append(attr)
+
+            # if attr in obj
+            if attr in self.obj:
+                obj = self.obj[attr]
+
+                # if instance is dicObjClass, find language class
+                if isinstance(obj, dicObjClass):
+                    if "DEFAULT" in obj: 
+                        self.default_dic = obj["DEFAULT"]
+                        self.default_dic_loc = []
+                    langobj = None
+                    if self.lang in obj:
+                        langobj = obj[self.lang]
+                    elif "DEFAULT" in obj:
+                        langobj = obj["DEFAULT"]
+                    if langobj is not None:
+                        return dicClass(self.root, langobj, self.lang, self.default_dic, self.default_dic_loc)
+                
+                if obj is not None:
+                    return dicClass(self.root, obj, self.lang, self.default_dic, self.default_dic_loc)
+            
+            locs = self.default_dic_loc
+            if self.default_dic is not None:
+                langobj = self.default_dic
+                for attr in locs:
+                    if attr in langobj:
+                        langobj = langobj[attr]
+                    else:
+                        langobj = None
+                        break
+                if langobj is not None:
+                    return dicClass(self.root, langobj, self.lang, self.default_dic, self.default_dic_loc)
+
+            #  if not in obj, return global dic
+            if '__global__' in self.root:
+                if self.lang in self.root.__global__:
+                    obj = self.root.__global__[self.lang]
+                    if attr in obj:
+                        return dicClass(self.root, obj[attr], self.lang, self.default_dic, self.default_dic_loc)
+                    
+                if "DEFAULT" in self.root.__global__:
+                    obj = self.root.__global__["DEFAULT"]
+                    if attr in obj:
+                        return dicClass(self.root, obj[attr], self.lang, self.default_dic, self.default_dic_loc)
+        except:
+            pass
+
+        return dicClass(self.root, None, self.lang, self.default_dic, self.default_dic_loc)
+
+    def __str__ (self):
+        obj = self.obj
+        if isinstance(obj, dicObjClass):
+            if self.lang in obj:
+                return str(obj[self.lang])
+            if "DEFAULT" in obj:
+                return str(obj["DEFAULT"])
+            return "{}"
+        return str(obj)
+
 if os.path.isdir(core.PATH.WEBSRC):
     framework = stdClass()
     framework.core = core
     framework.interfaces = interfaces
     framework.config = config
-
+    __DIC__ = __finddic__()
+    framework.dic = dicClass(__DIC__, __DIC__)
+    
     bootstrap = bootstrap(framework).bootstrap
