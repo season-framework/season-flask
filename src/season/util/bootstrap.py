@@ -287,7 +287,15 @@ class bootstrap:
                 framework.dic = season.dic
                 framework.dic.set_language(framework.request.language())
 
-                framework.response.data.set(module=module, dic=framework.dic)
+                def dic(namespaces):
+                    namespaces = namespaces.split(".")
+                    tmp = framework.dic
+                    for ns in namespaces:
+                        if tmp[ns] is not None:
+                            tmp = tmp[ns]
+                    return str(tmp)
+
+                framework.response.data.set(module=module, dic=dic)
 
                 def log(*args):
                     _logger(LOG_DEV, ERROR_INFO=ERROR_INFO, code=200, message=" ".join(map(str, args)))
