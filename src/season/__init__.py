@@ -38,6 +38,7 @@ core.CLASS.RESPONSE.STATUS = status
 
 interfaces = stdClass()
 cache = stdClass()
+cache.config = stdClass()
 
 class config(stdClass):
     def __init__(self, name='config', data=stdClass()):
@@ -46,6 +47,8 @@ class config(stdClass):
 
     @classmethod
     def load(self, name='config'):
+        if name in cache.config:
+            return cache.config[name]
         c = config()
         config_path = os.path.join(core.PATH.APP, 'config', name + '.py')
         if os.path.isfile(config_path) == False:
@@ -60,6 +63,7 @@ class config(stdClass):
         except Exception as e:
             pass
 
+        cache.config[name] = c
         return c
 
     def get(self, key=None, _default=None):
