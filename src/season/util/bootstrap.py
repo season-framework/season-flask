@@ -144,7 +144,7 @@ class bootstrap:
                 print_res.append(traceback.format_exc())
             print_res = "\n".join(print_res).strip()
             print(print_res)
-                
+        
         app.jinja_env.variable_start_string = config.get("jinja_variable_start_string", "{{")
         app.jinja_env.variable_end_string = config.get("jinja_variable_end_string", "}}")
         app.jinja_env.add_extension('pypugjs.ext.jinja.PyPugJSExtension')
@@ -276,6 +276,8 @@ class bootstrap:
                 framework._cache = stdClass()
                 framework._cache.model = stdClass()
                 framework.flask = flask
+
+                framework.cache = season.cache
 
                 framework.core = season.core
                 framework.config = season.config

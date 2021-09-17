@@ -37,6 +37,7 @@ core.CLASS.LIB = lib
 core.CLASS.RESPONSE.STATUS = status
 
 interfaces = stdClass()
+cache = stdClass()
 
 class config(stdClass):
     def __init__(self, name='config', data=stdClass()):
@@ -365,5 +366,6 @@ if os.path.isdir(core.PATH.WEBSRC):
     framework.config = config
     __DIC__ = __finddic__()
     framework.dic = dicClass(__DIC__, __DIC__)
+    framework.cache = cache
     
     bootstrap = bootstrap(framework).bootstrap
