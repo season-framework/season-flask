@@ -48,6 +48,11 @@ sf build --uri /home/user/project/websrc
 
 # Release Note
 
+### 0.3.0
+
+- add Socket.io 
+
+
 ### 0.2.14
 
 - add response.template_from_string function
