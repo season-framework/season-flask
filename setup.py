@@ -46,7 +46,10 @@ setup(
         'argh',
         'psutil',
         'pypugjs',
-        'lesscpy'
+        'lesscpy',
+        'libsass',
+        'dukpy',
+        'flask_socketio'
     ],
     python_requires='>=3.6',
     classifiers=[

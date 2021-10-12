@@ -40,6 +40,84 @@ interfaces = stdClass()
 cache = stdClass()
 cache.config = stdClass()
 
+class Framework():
+    def __init__(self, **kwargs):
+        season = kwargs['season']
+        module = kwargs['module']
+        module_path = kwargs['module_path']
+        controller_path = kwargs['controller_path']
+        segment_path = kwargs['segment_path']
+        ERROR_INFO = kwargs['ERROR_INFO']
+        _logger = kwargs['logger']
+        flask = kwargs['flask']
+        socketio = kwargs['socketio']
+        flask_socketio = kwargs['flask_socketio']
+
+        self.modulename = ERROR_INFO.module = module
+        self.modulepath = ERROR_INFO.modulepath = module_path
+        self.controllerpath = ERROR_INFO.controllerpath = controller_path
+        self.segmentpath = ERROR_INFO.segmentpath = segment_path
+
+        self._cache = stdClass()
+        self._cache.model = stdClass()
+        self.flask = flask
+        self.socketio = socketio
+        self.flask_socketio = flask_socketio
+        
+        self.cache = season.cache
+
+        self.core = season.core
+        self.config = season.config
+        self.request = season.core.CLASS.REQUEST(self)
+        self.request.segment = season.core.CLASS.SEGMENT(self)
+        self.response = season.core.CLASS.RESPONSE(self)
+        self.lib = season.core.CLASS.LIB(self)
+
+        self.dic = season.dic
+        self.dic.set_language(self.request.language())
+
+        def dic(namespaces):
+            namespaces = namespaces.split(".")
+            tmp = self.dic
+            for ns in namespaces:
+                if tmp[ns] is not None:
+                    tmp = tmp[ns]
+            return str(tmp)
+
+        self.response.data.set(module=module, dic=dic)
+
+        def log(*args):
+            _logger(2, ERROR_INFO=ERROR_INFO, code=200, message=" ".join(map(str, args)))
+        self.log = log
+
+        def model(modelname, module=None):
+            if module is None: module = self.modulename
+            model_path = None
+            if module is not None:
+                model_path = os.path.join(season.core.PATH.MODULES, module, 'model', modelname + '.py')
+
+                if os.path.isfile(model_path) == False:
+                    model_path = os.path.join(season.core.PATH.APP, 'model', modelname + '.py')
+            else:
+                model_path = os.path.join(season.core.PATH.APP, 'model', modelname + '.py')
+
+            if model_path in self._cache.model:
+                return self._cache.model[model_path]
+            
+            if os.path.isfile(model_path) == False:
+                self.response.error(500, 'Model Not Found')
+
+            with open(model_path, mode="rb") as file:
+                _code = file.read().decode('utf-8')
+                _tmp = {'__file__': model_path}
+                exec(compile(_code, model_path, 'exec'), _tmp)
+                self._cache.model[model_path] = _tmp['Model'](self)
+                return self._cache.model[model_path]
+
+        self.model = model
+
+core.CLASS.FRAMEWORK = Framework
+
 class config(stdClass):
     def __init__(self, name='config', data=stdClass()):
         self.data = data
@@ -364,12 +442,12 @@ class dicClass(dict):
         return str(obj)
 
 if os.path.isdir(core.PATH.WEBSRC):
-    framework = stdClass()
-    framework.core = core
-    framework.interfaces = interfaces
-    framework.config = config
+    season = stdClass()
+    season.core = core
+    season.interfaces = interfaces
+    season.config = config
     __DIC__ = __finddic__()
-    framework.dic = dicClass(__DIC__, __DIC__)
-    framework.cache = cache
-    
-    bootstrap = bootstrap(framework).bootstrap
+    season.dic = dicClass(__DIC__, __DIC__)
+    season.cache = cache
+
+    bootstrap = bootstrap(season).bootstrap

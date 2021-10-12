@@ -4,6 +4,7 @@ import time
 import traceback
 import inspect
 import flask
+import flask_socketio
 from werkzeug.exceptions import HTTPException
 
 class stdClass(dict):
@@ -47,6 +48,8 @@ class bootstrap:
         self.season = season
 
     def bootstrap(self, app, isMain):
+        socketio = flask_socketio.SocketIO(app)
+
         HTTP_METHODS = ['GET', 'HEAD', 'POST', 'PUT', 'DELETE', 'CONNECT', 'OPTIONS', 'TRACE', 'PATCH']
         season = self.season
         season.core.build.template()
@@ -266,68 +269,7 @@ class bootstrap:
 
                 module, module_path, controller_path, segment_path = module_finder()
 
-                framework = stdClass()
-
-                framework.modulename = ERROR_INFO.module = module
-                framework.modulepath = ERROR_INFO.modulepath = module_path
-                framework.controllerpath = ERROR_INFO.controllerpath = controller_path
-                framework.segmentpath = ERROR_INFO.segmentpath = segment_path
-
-                framework._cache = stdClass()
-                framework._cache.model = stdClass()
-                framework.flask = flask
-
-                framework.cache = season.cache
-
-                framework.core = season.core
-                framework.config = season.config
-                framework.request = season.core.CLASS.REQUEST(framework)
-                framework.request.segment = season.core.CLASS.SEGMENT(framework)
-                framework.response = season.core.CLASS.RESPONSE(framework)
-                framework.lib = season.core.CLASS.LIB(framework)
-
-                framework.dic = season.dic
-                framework.dic.set_language(framework.request.language())
-
-                def dic(namespaces):
-                    namespaces = namespaces.split(".")
-                    tmp = framework.dic
-                    for ns in namespaces:
-                        if tmp[ns] is not None:
-                            tmp = tmp[ns]
-                    return str(tmp)
-
-                framework.response.data.set(module=module, dic=dic)
-
-                def log(*args):
-                    _logger(LOG_DEV, ERROR_INFO=ERROR_INFO, code=200, message=" ".join(map(str, args)))
-                framework.log = log
-
-                def model(modelname, module=None):
-                    if module is None: module = framework.modulename
-                    model_path = None
-                    if module is not None:
-                        model_path = os.path.join(season.core.PATH.MODULES, module, 'model', modelname + '.py')
-
-                        if os.path.isfile(model_path) == False:
-                            model_path = os.path.join(season.core.PATH.APP, 'model', modelname + '.py')
-                    else:
-                        model_path = os.path.join(season.core.PATH.APP, 'model', modelname + '.py')
-
-                    if model_path in framework._cache.model:
-                        return framework._cache.model[model_path]
-                    
-                    if os.path.isfile(model_path) == False:
-                        framework.response.error(500, 'Model Not Found')
-
-                    with open(model_path, mode="rb") as file:
-                        _code = file.read().decode('utf-8')
-                        _tmp = {'__file__': model_path}
-                        exec(compile(_code, model_path, 'exec'), _tmp)
-                        framework._cache.model[model_path] = _tmp['Model'](framework)
-                        return framework._cache.model[model_path]
-
-                framework.model = model
+                framework = season.core.CLASS.FRAMEWORK(season=season, module=module, module_path=module_path, controller_path=controller_path, segment_path=segment_path, ERROR_INFO=ERROR_INFO, logger=_logger, flask=flask, socketio=socketio, flask_socketio=flask_socketio)
 
                 # load config
                 config = framework.config.load()
@@ -450,11 +392,88 @@ class bootstrap:
                 _logger(LOG_ERROR, ERROR_INFO=ERROR_INFO, code=500, starttime=starttime)
                 raise e
 
+        # module finder
+        def socket_finder():
+            result = dict()
+            for root, _, files in os.walk(season.core.PATH.MODULES):
+                if root.split("/")[-1] == "socket":
+                    module_path = "/".join(root.split("/")[:-1])
+                    module = module_path[len(season.core.PATH.MODULES) + 1:]
+                    ERROR_INFO = init_error_info()
+                    
+                    for fname in files:
+                        _fname, ext = os.path.splitext(fname)
+                        if ext != ".py": continue
+                        controller_path = os.path.join(root, fname)
+                        eventname = module
+                        if fname != 'index.py':
+                            eventname = os.path.join(module, _fname)
+                        framework = season.core.CLASS.FRAMEWORK(season=season, module=module, module_path=module_path, controller_path=controller_path, segment_path="", ERROR_INFO=ERROR_INFO, logger=_logger, flask=flask, socketio=socketio, flask_socketio=flask_socketio)
+
+                        file = open(controller_path, mode="rb")
+                        ctrlcode = file.read().decode('utf-8')
+                        file.close()
+                        _tmp = {'__file__': controller_path}
+                        exec(compile(ctrlcode, controller_path, 'exec'), _tmp)
+                        try:
+                            controller = _tmp['Controller'](framework)
+                        except:
+                            controller = _tmp['Controller']()
+                        result[eventname] = stdClass()
+                        result[eventname].controller = controller
+                        result[eventname].framework = framework
+            return result
+                        
+        sockets = socket_finder()
+        for eventname in sockets:
+            controller = sockets[eventname].controller
+            framework = sockets[eventname].framework
+            namespace =  "/" + eventname
+
+            startup = None
+            if hasattr(controller, '__startup__'):
+                startup = getattr(controller, '__startup__')
+                            
+            for fnname in controller.register:
+                if fnname.startswith("__") and fnname.endswith("__"): continue
+            
+                def _socketwrap(controller, fnname, framework, namespace):
+                    def emit(*args, **kwargs):
+                        kwargs['namespace'] = namespace
+                        flask_socketio.emit(fnname, *args, **kwargs)
+
+                    def send(message, **kwargs):
+                        kwargs['namespace'] = namespace
+                        flask_socketio.send(message, **kwargs)
+                    
+                    def join_room(room, sid=None):
+                        flask_socketio.join_room(room, sid=sid, namespace=namespace)
+                    
+                    def leave_room(room, sid=None):
+                        flask_socketio.leave_room(room, sid=sid, namespace=namespace)
+
+                    framework.socket = stdClass()
+                    framework.socket.emit = emit
+                    framework.socket.send = send
+                    framework.socket.join_room = join_room
+                    framework.socket.leave_room = leave_room
+
+                    def socketwrap(data):
+                        if startup is not None:
+                            startup(framework)
+                        getattr(controller, fnname)(framework, data)
+                    return socketwrap
+
+                socketio.on_event(fnname, _socketwrap(controller, fnname, framework, namespace), namespace=namespace)
+                _logger(LOG_DEV, message=f"socketio event binding on '{fnname}' with namespace '{namespace}'")
+        
         if handler.build is not None:
-            handler.build(app)
+            _app = handler.build(app)
+            if _app is not None:
+                app = app
         
         if isMain:
             _logger(LOG_DEV, message=f"running on http://{host}:{port}/ (Press CTRL+C to quit)")
-            app.run(host=host, port=port)
+            socketio.run(app, host=host, port=port)
 
         return app
