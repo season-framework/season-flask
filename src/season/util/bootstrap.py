@@ -430,18 +430,16 @@ class bootstrap:
             framework = sockets[eventname].framework
             namespace =  "/" + eventname
 
-            startup = None
-            if hasattr(controller, '__startup__'):
-                startup = getattr(controller, '__startup__')
-
             if hasattr(controller, 'register'):
                 fnlist = controller.register
             else:
                 fnlist = dir(controller)
 
-            for fnname in fnlist:
-                if fnname.startswith("__") and fnname.endswith("__"): continue
-            
+            def regist(controller, fnname, framework, namespace):
+                startup = None
+                if hasattr(controller, '__startup__'):
+                    startup = getattr(controller, '__startup__')
+                    
                 def _socketwrap(controller, fnname, framework, namespace):
                     def emit(*args, **kwargs):
                         kwargs['namespace'] = namespace
@@ -470,7 +468,24 @@ class bootstrap:
 
                 socketio.on_event(fnname, _socketwrap(controller, fnname, framework, namespace), namespace=namespace)
                 _logger(LOG_DEV, message=f"socketio event binding on '{fnname}' with namespace '{namespace}'")
-        
+
+            for fnname in fnlist:
+                if fnname.startswith("__") and fnname.endswith("__"): continue
+                regist(controller, fnname, framework, namespace)
+                
+            if hasattr(controller, 'namespaces'):
+                namespaces = controller.namespaces
+                for _namespace in namespaces:
+                    controller = namespaces[_namespace]
+                    _namespace = os.path.join(namespace, _namespace)
+                    if hasattr(controller, 'register'):
+                        fnlist = controller.register
+                    else:
+                        fnlist = dir(controller)
+                    for fnname in fnlist:
+                        if fnname.startswith("__") and fnname.endswith("__"): continue
+                        regist(controller, fnname, framework, _namespace)
+
         if handler.build is not None:
             try:
                 _app = handler.build(app, socketio)
