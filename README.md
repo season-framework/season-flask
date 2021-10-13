@@ -48,6 +48,10 @@ sf build --uri /home/user/project/websrc
 
 # Release Note
 
+### 0.3.6
+
+- Socket.io disconnect bug fixed
+
 ### 0.3.3
 
 - Socket.io Namespace Injection

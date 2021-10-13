@@ -461,7 +461,12 @@ class bootstrap:
                     framework.socket.join_room = join_room
                     framework.socket.leave_room = leave_room
                     
-                    def socketwrap(data):
+                    def socketwrap(*args):
+                        data = None
+                        if len(args) == 1:
+                            data = args[0]
+                        elif len(args) > 1:
+                            data = args
                         try:
                             if startup is not None: startup(framework, namespace)
                         except:
