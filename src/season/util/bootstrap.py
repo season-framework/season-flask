@@ -433,34 +433,38 @@ class bootstrap:
             startup = None
             if hasattr(controller, '__startup__'):
                 startup = getattr(controller, '__startup__')
-                            
-            for fnname in controller.register:
+
+            if hasattr(controller, 'register'):
+                fnlist = controller.register
+            else:
+                fnlist = dir(controller)
+
+            for fnname in fnlist:
                 if fnname.startswith("__") and fnname.endswith("__"): continue
             
                 def _socketwrap(controller, fnname, framework, namespace):
                     def emit(*args, **kwargs):
                         kwargs['namespace'] = namespace
-                        flask_socketio.emit(fnname, *args, **kwargs)
+                        socketio.emit(fnname, *args, **kwargs)
 
                     def send(message, **kwargs):
                         kwargs['namespace'] = namespace
-                        flask_socketio.send(message, **kwargs)
+                        socketio.send(message, **kwargs)
                     
                     def join_room(room, sid=None):
-                        flask_socketio.join_room(room, sid=sid, namespace=namespace)
+                        socketio.join_room(room, sid=sid, namespace=namespace)
                     
                     def leave_room(room, sid=None):
-                        flask_socketio.leave_room(room, sid=sid, namespace=namespace)
+                        socketio.leave_room(room, sid=sid, namespace=namespace)
 
                     framework.socket = stdClass()
                     framework.socket.emit = emit
                     framework.socket.send = send
                     framework.socket.join_room = join_room
                     framework.socket.leave_room = leave_room
-
+                    
                     def socketwrap(data):
-                        if startup is not None:
-                            startup(framework)
+                        if startup is not None: startup(framework)
                         getattr(controller, fnname)(framework, data)
                     return socketwrap
 
