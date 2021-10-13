@@ -468,7 +468,10 @@ class bootstrap:
                 _logger(LOG_DEV, message=f"socketio event binding on '{fnname}' with namespace '{namespace}'")
         
         if handler.build is not None:
-            _app = handler.build(app)
+            try:
+                _app = handler.build(app, socketio)
+            except:
+                _app = handler.build(app)
             if _app is not None:
                 app = app
         
