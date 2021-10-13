@@ -462,8 +462,14 @@ class bootstrap:
                     framework.socket.leave_room = leave_room
                     
                     def socketwrap(data):
-                        if startup is not None: startup(framework)
-                        getattr(controller, fnname)(framework, data)
+                        try:
+                            if startup is not None: startup(framework, namespace)
+                        except:
+                            if startup is not None: startup(framework)
+                        try:
+                            getattr(controller, fnname)(framework, namespace, data)
+                        except:
+                            getattr(controller, fnname)(framework, data)
                     return socketwrap
 
                 socketio.on_event(fnname, _socketwrap(controller, fnname, framework, namespace), namespace=namespace)
