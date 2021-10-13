@@ -443,7 +443,7 @@ class bootstrap:
                 def _socketwrap(controller, fnname, framework, namespace):
                     def emit(*args, **kwargs):
                         kwargs['namespace'] = namespace
-                        socketio.emit(fnname, *args, **kwargs)
+                        socketio.emit(*args, **kwargs)
 
                     def send(message, **kwargs):
                         kwargs['namespace'] = namespace
