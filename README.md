@@ -48,6 +48,10 @@ sf build --uri /home/user/project/websrc
 
 # Release Note
 
+### 0.3.7
+
+- change Framework Object
+
 ### 0.3.6
 
 - Socket.io disconnect bug fixed

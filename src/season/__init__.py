@@ -40,7 +40,7 @@ interfaces = stdClass()
 cache = stdClass()
 cache.config = stdClass()
 
-class Framework():
+class Framework(stdClass):
     def __init__(self, **kwargs):
         season = kwargs['season']
         module = kwargs['module']
