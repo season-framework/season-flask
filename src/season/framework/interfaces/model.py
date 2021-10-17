@@ -219,7 +219,7 @@ class MySQL(base):
         return _field, _format, _update_format, _data
 
     def __where__(self, where):
-        IGNORE_FIELDS = ['orderby', 'limit', 'fields', 'where', 'like', 'or']
+        IGNORE_FIELDS = ['groupby', 'orderby', 'limit', 'fields', 'where', 'like', 'or']
         fields = self.fields()
         _where = []
         _data = []
@@ -350,16 +350,38 @@ class MySQL(base):
     def get(self, **where):
         try:
             tablename = self.tablename
+            orderby = None
+            if 'orderby' in where:
+                orderby = where['orderby']
+                del where['orderby']
+            groupby = None
+            if 'groupby' in where:
+                groupby = where['groupby']
+                del where['groupby']
+            limit = None
+            if 'limit' in where:
+                limit = where['limit']
+                del where['limit']
+            
             targetfields = '*'
             if 'fields' in where:
                 targetfields = where['fields']
             wherestr, wheredata = self.__where__(where)
             sql = f"SELECT {targetfields} FROM `{tablename}` WHERE {wherestr}"
+
+            if groupby is not None:
+                sql = sql + ' GROUP BY ' + groupby
+            if orderby is not None:
+                sql = sql + ' ORDER BY ' + orderby
+            if limit is not None:
+                sql = sql + ' LIMIT ' + str(limit)
+
             _, rows, _ = self.query(sql, wheredata)
             if len(rows) > 0:
                 return rows[0]
             return None
         except Exception as e:
+            print(e)
             return None
 
     def count(self, **where):
@@ -384,9 +406,16 @@ class MySQL(base):
             orderby = None
             if 'orderby' in where:
                 orderby = where['orderby']
+                del where['orderby']
+            groupby = None
+            if 'groupby' in where:
+                groupby = where['groupby']
+                del where['groupby']
             limit = None
             if 'limit' in where:
                 limit = where['limit']
+                del where['limit']
+
             targetfields = '*'
             if 'fields' in where:
                 targetfields = where['fields']
@@ -395,6 +424,8 @@ class MySQL(base):
                 sql = f'SELECT {targetfields} FROM `{tablename}` WHERE {wherestr}'
             else:
                 sql = f'SELECT {targetfields} FROM `{tablename}`'
+            if groupby is not None:
+                sql = sql + ' GROUP BY ' + groupby
             if orderby is not None:
                 sql = sql + ' ORDER BY ' + orderby
             if limit is not None:
@@ -402,6 +433,7 @@ class MySQL(base):
             _, rows, _ = self.query(sql, data=wheredata)
             return rows
         except Exception as e:
+            print(e)
             return []
 
     def delete(self, **where):
@@ -455,6 +487,7 @@ class MySQL(base):
         result['list'] = rows
         del query['limit']
         if 'orderby' in query: del query['orderby']
+        if 'groupby' in query: del query['groupby']
         result['lastpage'] = math.ceil(self.count(**query) / size)
         result['page'] = page + 1
         result['size'] = size
