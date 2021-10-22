@@ -48,6 +48,10 @@ sf build --uri /home/user/project/websrc
 
 # Release Note
 
+### 0.3.9
+
+- command run modified (add pattern, ignores)
+
 ### 0.3.7
 
 - change Framework Object

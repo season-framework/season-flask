@@ -11,6 +11,7 @@ from .framework.segment import segment
 from .framework.response import response
 from .framework.lib import lib
 from .framework.status import status
+from .version import VERSION_STRING as VERSION
 
 LOG_DEBUG = 0
 LOG_INFO = 1
@@ -18,6 +19,8 @@ LOG_DEV = 2
 LOG_WARNING = 3
 LOG_ERROR = 4
 LOG_CRITICAL = 5
+
+version = __version__ = __VERSION__ = VERSION
 
 core = stdClass()
 core.PATH = stdClass()

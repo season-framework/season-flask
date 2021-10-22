@@ -4,9 +4,36 @@ import subprocess
 import psutil
 import multiprocessing as mp
 import subprocess
+import fnmatch
 
+from season.command.build import PATH_PROJECT
+from .. import config, core
 from watchdog.observers import Observer
 from watchdog.events import FileSystemEventHandler
+
+PATH_PROJECT = core.PATH.PROJECT
+
+seasonconfig = config.load().data
+PATTERNS = []
+try:
+    if type(seasonconfig['watch']['pattern']) == str:
+        PATTERNS = seasonconfig['watch']['pattern'].split(",")
+    elif type(seasonconfig['watch']['pattern']) == list:
+        PATTERNS = seasonconfig['watch']['pattern']
+    else:
+        PATTERNS = ["*"]    
+except:
+    PATTERNS = ["*"]
+
+IGNORES = []
+try:
+    if type(seasonconfig['watch']['ignore']) == str:
+        IGNORES = seasonconfig['watch']['ignore'].split(",")
+    elif type(seasonconfig['watch']['ignore']) == list:
+        IGNORES = seasonconfig['watch']['ignore']
+except:
+    pass
+IGNORES.append("websrc")
 
 CACHE = {}
 
@@ -25,8 +52,26 @@ def run():
     class Handler(FileSystemEventHandler):
         @staticmethod
         def on_any_event(event):
-            CACHE['refresh'] = True
-            CACHE['lasttime'] = time.time() * 1000
+            try:
+                if event.event_type == 'closed':
+                    return
+                srcpath = event.src_path[len(PATH_PROJECT) + 1:]
+
+                for pt in IGNORES:
+                    if fnmatch.fnmatch(srcpath, pt):
+                        return
+
+                matched = False
+                for pt in PATTERNS:
+                    matched = fnmatch.fnmatch(srcpath, pt)
+                    if matched:
+                        break
+
+                if matched:
+                    CACHE['refresh'] = True
+                    CACHE['lasttime'] = time.time() * 1000
+            except:
+                pass
 
     mp.freeze_support()
     proc = mp.Process(target=run_ctrl)
