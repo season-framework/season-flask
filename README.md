@@ -48,6 +48,10 @@ sf build --uri /home/user/project/websrc
 
 # Release Note
 
+### 0.3.11
+
+- socketio error display
+
 ### 0.3.10
 
 - socket bug fixed

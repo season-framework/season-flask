@@ -114,15 +114,18 @@ class bootstrap:
                 _prefix = "[CRITI]"
 
             sourcefile = "unknown"
-            for stack in inspect.stack():
-                try:
-                    if stack.filename[:len(season.core.PATH.PROJECT)] == season.core.PATH.PROJECT:
-                        sourcefile = stack.filename[len(season.core.PATH.PROJECT)+1:]
-                        break
-                except:
-                    pass
-            if sourcefile == 'unknown' and ERROR_INFO.controllerpath != 'unknown':
-                sourcefile = ERROR_INFO.controllerpath
+            try:
+                for stack in inspect.stack():
+                    try:
+                        if stack.filename[:len(season.core.PATH.PROJECT)] == season.core.PATH.PROJECT:
+                            sourcefile = stack.filename[len(season.core.PATH.PROJECT)+1:]
+                            break
+                    except:
+                        pass
+                if sourcefile == 'unknown' and ERROR_INFO.controllerpath != 'unknown':
+                    sourcefile = ERROR_INFO.controllerpath
+            except:
+                pass
                 
             print_res = f"{_prefix_color}{_prefix}[{timestamp}]"
             if level == LOG_DEV:
@@ -136,7 +139,11 @@ class bootstrap:
                 print_res = print_res + f"[{code}]"
                 if starttime is not None:
                     print_res = print_res + f"[{starttime}ms]"
-                print_res = print_res + "\033[0m " + ERROR_INFO.path
+                print_res = print_res + "\033[0m "
+                try:
+                    print_res = print_res + str(ERROR_INFO.path)
+                except:
+                    pass
 
             print_res = [print_res]
             if level >= LOG_ERROR:
@@ -392,7 +399,12 @@ class bootstrap:
                 _logger(LOG_ERROR, ERROR_INFO=ERROR_INFO, code=500, starttime=starttime)
                 raise e
 
-        # module finder
+        # socket io
+        @socketio.on_error_default
+        def socketio_error_handler(e):
+            _logger(LOG_ERROR, "socket error")
+            return
+
         def socket_finder():
             result = dict()
             for root, _, files in os.walk(season.core.PATH.MODULES):
