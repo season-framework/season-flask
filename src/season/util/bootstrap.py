@@ -436,53 +436,63 @@ class bootstrap:
                 fnlist = dir(controller)
 
             def regist(controller, fnname, framework, namespace):
+                if hasattr(getattr(controller, fnname), '__call__') == False:
+                    return False
+
                 startup = None
                 if hasattr(controller, '__startup__'):
                     startup = getattr(controller, '__startup__')
-                    
+
                 def _socketwrap(controller, fnname, framework, namespace):
-                    def emit(*args, **kwargs):
-                        kwargs['namespace'] = namespace
-                        socketio.emit(*args, **kwargs)
-
-                    def send(message, **kwargs):
-                        kwargs['namespace'] = namespace
-                        socketio.send(message, **kwargs)
-                    
-                    def join_room(room, sid=None):
-                        socketio.join_room(room, sid=sid, namespace=namespace)
-                    
-                    def leave_room(room, sid=None):
-                        socketio.leave_room(room, sid=sid, namespace=namespace)
-
-                    framework.socket = stdClass()
-                    framework.socket.emit = emit
-                    framework.socket.send = send
-                    framework.socket.join_room = join_room
-                    framework.socket.leave_room = leave_room
-                    
                     def socketwrap(*args):
+                        def emit(*args, **kwargs):
+                            kwargs['namespace'] = namespace
+                            socketio.emit(*args, **kwargs)
+                            
+                        def send(message, **kwargs):
+                            kwargs['namespace'] = namespace
+                            socketio.send(message, **kwargs)
+                        
+                        def join_room(room, sid=None):
+                            socketio.join_room(room, sid=sid, namespace=namespace)
+                        
+                        def leave_room(room, sid=None):
+                            socketio.leave_room(room, sid=sid, namespace=namespace)
+
+                        framework.socket = stdClass()
+                        framework.socket.emit = emit
+                        framework.socket.send = send
+                        framework.socket.join_room = join_room
+                        framework.socket.leave_room = leave_room
+
                         data = None
                         if len(args) == 1:
                             data = args[0]
                         elif len(args) > 1:
                             data = args
+
                         try:
                             if startup is not None: startup(framework, namespace)
                         except:
                             if startup is not None: startup(framework)
+
                         try:
                             getattr(controller, fnname)(framework, namespace, data)
                         except:
                             getattr(controller, fnname)(framework, data)
+
                     return socketwrap
 
                 socketio.on_event(fnname, _socketwrap(controller, fnname, framework, namespace), namespace=namespace)
-                _logger(LOG_DEV, message=f"socketio event binding on '{fnname}' with namespace '{namespace}'")
+                return True
 
+            reglist = []
             for fnname in fnlist:
                 if fnname.startswith("__") and fnname.endswith("__"): continue
-                regist(controller, fnname, framework, namespace)
+                if regist(controller, fnname, framework, namespace):
+                    reglist.append(fnname)
+            reglist = "/".join(reglist)
+            _logger(LOG_DEV, message=f"socketio event binding on '{reglist}' with namespace '{namespace}'")
                 
             if hasattr(controller, 'namespaces'):
                 namespaces = controller.namespaces
@@ -493,9 +503,14 @@ class bootstrap:
                         fnlist = controller.register
                     else:
                         fnlist = dir(controller)
+
+                    reglist = []
                     for fnname in fnlist:
                         if fnname.startswith("__") and fnname.endswith("__"): continue
-                        regist(controller, fnname, framework, _namespace)
+                        if regist(controller, fnname, framework, _namespace):
+                            reglist.append(fnname)
+                    reglist = "/".join(reglist)
+                    _logger(LOG_DEV, message=f"socketio event binding on '{reglist}' with namespace '{_namespace}'")
 
         if handler.build is not None:
             try:
