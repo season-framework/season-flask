@@ -59,13 +59,13 @@ class bootstrap:
         app.logger.disabled = True
         os.environ["WERKZEUG_RUN_MAIN"] = "true"
 
-        def init_error_info():
+        def init_error_info(default="unknown"):
             ERROR_INFO = stdClass()
-            ERROR_INFO.path = "unknown"
-            ERROR_INFO.module = "unknown"
-            ERROR_INFO.modulepath = "unknown"
-            ERROR_INFO.controllerpath = "unknown"
-            ERROR_INFO.segmentpath = "unknown"
+            ERROR_INFO.path = default
+            ERROR_INFO.module = default
+            ERROR_INFO.modulepath = default
+            ERROR_INFO.controllerpath = default
+            ERROR_INFO.segmentpath = default
             return ERROR_INFO
         
         # Handler
@@ -523,6 +523,8 @@ class bootstrap:
                             reglist.append(fnname)
                     reglist = "/".join(reglist)
                     _logger(LOG_DEV, message=f"socketio event binding on '{reglist}' with namespace '{_namespace}'")
+
+        app.framework = season.core.CLASS.FRAMEWORK(season=season, module="build", module_path="build", controller_path="", segment_path="", ERROR_INFO=init_error_info("build"), logger=_logger, flask=flask, socketio=socketio, flask_socketio=flask_socketio)
 
         if handler.build is not None:
             try:
