@@ -56,7 +56,6 @@ def run():
                 if event.event_type == 'closed':
                     return
                 srcpath = event.src_path[len(PATH_PROJECT) + 1:]
-
                 for pt in IGNORES:
                     if fnmatch.fnmatch(srcpath, pt):
                         return

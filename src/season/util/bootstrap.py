@@ -79,6 +79,7 @@ class bootstrap:
         handler.after_request = config.get('after_request', None)
         handler.build = config.get('build', None)
         handler.build_resource = config.get('build_resource', None)
+        handler.handle_resource = config.get('handle_resource', None)
 
         LOG_DEBUG = 0
         LOG_INFO = 1
@@ -126,7 +127,7 @@ class bootstrap:
                     sourcefile = ERROR_INFO.controllerpath
             except:
                 pass
-                
+
             print_res = f"{_prefix_color}{_prefix}[{timestamp}]"
             if level == LOG_DEV:
                 print_res = f"{_prefix_color}{_prefix}"
@@ -195,8 +196,17 @@ class bootstrap:
         def resources(path=''):
             starttime = round(time.time() * 1000)
             ERROR_INFO = init_error_info()
+
             try:
                 ERROR_INFO.path = f"/resources/{path}"
+
+                if handler.handle_resource is not None:
+                    framework = season.core.CLASS.FRAMEWORK(season=season, module="", module_path="", controller_path="", segment_path="", ERROR_INFO=ERROR_INFO, logger=_logger, flask=flask, socketio=socketio, flask_socketio=flask_socketio)
+                    res = handler.handle_resource(framework, path)
+                    if res is not None: 
+                        _logger(LOG_DEBUG, ERROR_INFO=ERROR_INFO, starttime=starttime)
+                        return res
+
                 path = path.split('/')
 
                 # check module resource

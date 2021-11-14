@@ -59,10 +59,18 @@ class response:
             obj = dict(obj)
         except:
             pass
-        obj = json.dumps(obj, default=self.framework.core.json_default)
+        obj = json.dumps(obj, default=self.framework.core.json_default, ensure_ascii=False)
         resp = self._flask.Response(str(obj))
         self.headers.set('Content-Type', 'application/json')
         return self._build(resp)
+
+    def status(self, status_code=200, data=None):
+        res = dict()
+        res['code'] = status_code
+        if data is not None:
+            res['data'] = data
+        res = json.dumps(res, default=self.framework.core.json_default, ensure_ascii=False)
+        return self.send(res, content_type='application/json')
 
     def template_from_string(self, template_string, **kwargs):
         self.data.set(**kwargs)
@@ -106,7 +114,7 @@ class response:
 
         def set_json(self, **args):
             for key, value in args.items():
-                self.data[key] = json.dumps(value, default=self.framework.core.json_default)
+                self.data[key] = json.dumps(value, default=self.framework.core.json_default, ensure_ascii=False)
 
     # internal classes
     class _headers:
